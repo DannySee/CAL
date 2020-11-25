@@ -1,12 +1,4 @@
-Attribute VB_Name = "IN_PROGRESS"
-
-
-'*******************************
-'Declare local moduel variables
-'*******************************
-Dim cnn As New ADODB.Connection
-Dim rst As New ADODB.Recordset
-Dim oPrgms As New clsPrograms
+Attribute VB_Name = "Data_Maintenance"
 
 
 '*******************************************************************************
@@ -112,6 +104,11 @@ Function Compare(old As Scripting.Dictionary, upd As Variant) As Variant
     'Declare function variables
     Dim iRow As Integer
     Dim iCol As Integer
+    Dim iCIDCol  As integer
+    Dim iPIDCol As Integer
+    Dim iSDateCol As Integer
+    Dim iCustCol As Integer
+    Dim iPKeyCol As Integer
     Dim pID As String
     Dim strInsert As String
     Dim strAssemble As String
@@ -119,12 +116,19 @@ Function Compare(old As Scripting.Dictionary, upd As Variant) As Variant
     Dim strVal As String
     Dim strInsRows As String
 
+    'Get column index for pertinant fields
+    iCIDCol = oPrgms.ColIndex("CUSTOMER_ID")
+    iCustCol = oPrgms.ColIndex("CUSTOMER")
+    iPIDCol = oPrgms.ColIndex("PROGRAM_ID")
+    iSDateCol = oPrgms.ColIndex("START_DATE")
+    iPKeyCol = oPrgms.ColIndex("PRIMARY_KEY")
+
     'Loop through rows of current program data
     For iRow = 0 To UBound(upd, 2)
 
         'If row is new with at least one field filled out (customer name)
-        If IsNull(upd(oPrgms.ColIndex("CUSTOMER_ID"), iRow)) Then
-            If upd(oPrgms.ColIndex("CUSTOMER"), iRow) <> "" Then
+        If IsNull(upd(iCIDCol, iRow)) Then
+            If upd(iCustCol, iRow) <> "" Then
 
                 'Save SQL insert string (including each element of programs tab)
                 strInsert = Append(strInsert, "|") & GetInsertString(upd, iRow)
@@ -135,7 +139,7 @@ Function Compare(old As Scripting.Dictionary, upd As Variant) As Variant
         Else
 
             'Get current line program ID (used for SQL string)
-            pID = upd(oPrgms.ColIndex("PROGRAM_ID"), iRow)
+            pID = upd(iPIDCol, iRow)
 
             'Set temp update SQL string to nothing
             strAssemble = ""
@@ -165,9 +169,9 @@ Function Compare(old As Scripting.Dictionary, upd As Variant) As Variant
 
                     'Save SQL update string to end date of previous record
                     strUpdate = Append(strUpdate, "|") & "END_DATE = '" _
-                        & upd(oPrgms.ColIndex("START_DATE"), iRow) - 1 & "' " _
+                        & upd(iSDateCol, iRow) - 1 & "' " _
                         & "WHERE PRIMARY_KEY = " _
-                        & upd(oPrgms.ColIndex("PRIMARY_KEY"), iRow)
+                        & upd(iPKeyCol, iRow)
 
                     'Save SQL insert string
                     strInsert = Append(strInsert, "|") _
@@ -181,7 +185,7 @@ Function Compare(old As Scripting.Dictionary, upd As Variant) As Variant
 
                 'Save SQL update string
                 strUpdate = Append(strUpdate, "|") & strAssemble _
-                    & " WHERE PRIMARY_KEY = " & upd(0, iRow)
+                    & " WHERE PRIMARY_KEY = " & upd(iPKeyCol, iRow)
             End If
         End If
     Next
@@ -206,13 +210,20 @@ Function Validate(val As Variant, iCol As Integer, iRow As Integer) As String
 
     'Declare function variables
     Dim sep As String
+    Dim iSDateCol As integer
+    Dim iEDateCol As integer
+    Dim iVendCol As integer
+
+    'Get column index for pertinant fields
+    iSDateCol = oPrgms.ColIndex("START_DATE")
+    iEDateCol = oPrgms.ColIndex("END_DATE")
+    iVendCol = oPrgms.ColIndex("VENDOR_NUM")
 
     'Get string with datatype delimiters (quotes for text, nothing for number)
     sep = oPrgms.ColType(iCol)
 
     'If passthrough data type is datetime and value is invalid date
-    If (iCol = oPrgms.ColIndex("START_DATE") Or iCol = _
-        oPrgms.ColIndex("END_DATE")) And Not IsDate(val) Then
+    If (iCol = iSDateCol Or iCol = iEDateCol) And Not IsDate(val) Then
 
         'Alert user of invalid date value
         MsgBox "INVALID DATE: Please correct the " & oPrgms.Cols(iCol) _
@@ -225,7 +236,7 @@ Function Validate(val As Variant, iCol As Integer, iRow As Integer) As String
         val = "DateErr"
 
     'If passthrough datatype is number and value is empty
-    ElseIf iCol = oPrgms.ColIndex("VENDOR_NUM") And IsNull(val) Then
+    ElseIf iCol = iVendCol And IsNull(val) Then
 
         'Return 0 value (string to maintain function type)
         val = "0"
@@ -268,11 +279,19 @@ Function GetInsertString(var As Variant, iRow As Integer) As String
 
     'Declare function variables
     Dim iCol As Integer
+    Dim iCIDCol As Integer
+    Dim iPIDCol As integer
+    Dim iDABCol As integer
     Dim strRow As String
     Dim strVal As String
 
+    'Get column index for pertinant fields
+    iCIDCol = oPrgms.ColIndex("CUSTOMER_ID")
+    iPIDCol = oPrgms.ColIndex("PROGRAM_ID")
+    iDABCol = oPrgms.ColIndex("DAB")
+
     'If array does not contain customer ID data
-    If IsNull(var(oPrgms.ColIndex("CUSTOMER_ID"), iRow)) Then
+    If IsNull(var(iCIDCol, iRow)) Then
 
         'Establish conection to SQL server
         cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1" _
@@ -298,12 +317,12 @@ Function GetInsertString(var As Variant, iRow As Integer) As String
     Else
 
         'Assemble first 3 fields of SQL insert string
-        strRow = var(oPrgms.ColIndex("CUSTOMER_ID"), iRow) & ",'" _
-            & var(oPrgms.ColIndex("PROGRAM_ID"), iRow) & "'"
+        strRow = var(iCIDCol, iRow) & ",'" _
+            & var(iPIDCol, iRow) & "'"
     End If
 
     'Loop through each column of passthrough array
-    For iCol = oPrgms.ColIndex("DAB") To UBound(var, 1)
+    For iCol = iDABCol To UBound(var, 1)
 
         'Assemble SQL insert string
         strVal = Validate(var(iCol, iRow), iCol, iRow)
@@ -403,5 +422,4 @@ Sub Fake_Save()
         cnn.Close
         Set cnn = Nothing
     End If
-
 End Sub

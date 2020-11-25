@@ -2,31 +2,35 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
+
 Attribute VB_Name = "clsPrograms"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
+
 Private dictCol As New Scripting.Dictionary
 Private dictType As New Scripting.Dictionary
 Private dictIndex As New Scripting.Dictionary
+Private strFields As String
 
 Public Property Get Cols() As Scripting.Dictionary
 
     Set Cols = dictCol
-    
+
 End Property
 
 Public Property Get ColType() As Scripting.Dictionary
-    
+
     Set ColType = dictType
-    
+
 End Property
 
 Public Property Get ColIndex() As Scripting.Dictionary
-    
+
     Set ColIndex = dictIndex
-    
+
 End Property
 
 Private Sub Class_Initialize()
@@ -58,7 +62,7 @@ Private Sub Class_Initialize()
         .Add 23, "PACKET_DL"
         .Add 24, "COMMENTS"
     End With
-    
+
     With dictIndex
         .Add "PRIMARY_KEY", 0
         .Add "CUSTOMER_ID", 1
@@ -86,7 +90,7 @@ Private Sub Class_Initialize()
         .Add "PACKET_DL", 23
         .Add "COMMENTS", 24
     End With
-    
+
     With dictType
         .Add 0, ""
         .Add 1, ""
@@ -116,4 +120,3 @@ Private Sub Class_Initialize()
     End With
 
 End Sub
-

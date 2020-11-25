@@ -536,15 +536,3 @@ Sub Delete_Programs(iRow As Long, strSht As String, strFields As String, strTabl
     Set cnn = Nothing
 
 End Sub
-
-Sub test()
-
-Application.EnableEvents = True
-
-    Dim cnn As New ADODB.Connection
-
-    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
-
-    cnn.Execute ("EXEC _test PROGRAM_DESCRIPTION, 'TEST'")
-
-End Sub
