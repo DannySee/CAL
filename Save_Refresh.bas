@@ -285,7 +285,7 @@ Function GetInsertString(var As Variant, iRow As Integer) As String
             & var(oPrgms.ColIndex("CUSTOMER"), iRow) & "' " _
             & "GROUP BY CUSTOMER_ID", cnn
 
-        'Assemble
+        'Assemble SQL insert string
         strRow = rst.Fields("CID").value & ",'" & rst.Fields("CID").value & "-" & rst.Fields("PID").value & "'"
 
         rst.Close
