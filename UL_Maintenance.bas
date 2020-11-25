@@ -1,4 +1,6 @@
 Attribute VB_Name = "UL_Maintenance"
+
+
 Sub UL_Refresh()
 
     'Declare global variable
@@ -11,12 +13,12 @@ Sub UL_Refresh()
     'Freeze events while data is being pulled
     Application.EnableEvents = False
     Application.ScreenUpdating = False
-    
+
     'Establish connection to SSMS
     strCnn = "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
     cnn.Open strCnn
     cnn.CommandTimeout = 900
-    
+
     'Setup fields variable
     strProgramFields = "PRIMARY_KEY," _
         & "CUSTOMER_ID," _
@@ -43,7 +45,7 @@ Sub UL_Refresh()
         & "PACKET," _
         & "PACKET_DL," _
         & "COMMENTS"
-            
+
     'query to pull in Programs sheet
     rst.Open "SELECT " & strProgramFields & " " _
         & "FROM UL_Programs " _
@@ -61,7 +63,7 @@ Sub UL_Refresh()
             & "OR T2_ID = '" & Environ("Username") & "') " _
         & "AND O.ED = END_DATE " _
         & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
-    
+
     'Clear previous sheet contents and paste new (pause protection)
     With Sheets("Programs")
         .Unprotect "Dac123am"
@@ -71,10 +73,10 @@ Sub UL_Refresh()
         .Rows(1).AutoFilter
         .Tab.Color = RGB(38, 38, 38)
     End With
-    
+
     'Close recordset for next sheet
     rst.Close
-    
+
     'Setup query string to pull in Customer Profile sheet
     rst.Open "SELECT * " _
         & "FROM UL_Customer_Profile " _
@@ -86,7 +88,7 @@ Sub UL_Refresh()
             & "OR T1_ID = '" & Environ("Username") & "' " _
             & "OR T2_ID = '" & Environ("Username") & "') " _
         & "ORDER BY CUSTOMER", cnn
-    
+
     'Clear previous sheet contents and paste new
     With Sheets("Customer Profile")
         .Unprotect "Dac123am"
@@ -95,10 +97,10 @@ Sub UL_Refresh()
         .Range("A2").CopyFromRecordset rst
         .Rows(1).AutoFilter
     End With
-    
+
     'Close recordset for next sheet
     rst.Close
-    
+
     'Setup query string to pull in Programs sheet
     rst.Open "SELECT * " _
         & "FROM UL_Deviation_Loads " _
@@ -110,7 +112,7 @@ Sub UL_Refresh()
             & "OR T1_ID = '" & Environ("Username") & "' " _
             & "OR T2_ID = '" & Environ("Username") & "') " _
         & "ORDER BY CUSTOMER, PROGRAM", cnn
-    
+
     'Clear previous sheet contents and paste new
     With Sheets("Deviation Loads")
         .Unprotect "Dac123am"
@@ -119,16 +121,16 @@ Sub UL_Refresh()
         .Range("A2").CopyFromRecordset rst
         .Rows(1).AutoFilter
     End With
-    
+
     'Close recordset for next sheet
     rst.Close
-    
+
     'Clear sheet
     Sheets("DropDowns").Cells.value = ""
-    
+
     'Loop through all columns in drop downs
     For i = 1 To 7
-    
+
         'Setup query string to pull in Customer Profile sheet
         rst.Open "SELECT DROP_DOWN " _
             & "FROM UL_List_Options " _
@@ -137,11 +139,11 @@ Sub UL_Refresh()
 
         'Paste to sheet
         Sheets("DropDowns").Cells(1, i).CopyFromRecordset rst
-        
+
         'Close recordset for next iteration
         rst.Close
     Next
-    
+
     'Add new customer drop (user's customer)
     rst.Open "SELECT CUSTOMER_NAME " _
         & "FROM UL_ACCOUNT_ASS " _
@@ -151,10 +153,10 @@ Sub UL_Refresh()
         & "OR T2_ID = '" & Environ("Username") & "' " _
         & "ORDER BY CUSTOMER_NAME"
     Sheets("DropDowns").Cells(1, 8).CopyFromRecordset rst
-    
+
     'Close recordset for next iteration
     rst.Close
-    
+
     'Add new customer drop (Other customers)
     rst.Open "SELECT CUSTOMER_NAME " _
         & "FROM UL_ACCOUNT_ASS " _
@@ -168,19 +170,19 @@ Sub UL_Refresh()
         Sheets("Control Panel").Cust_Add_Listbox.List = _
         .Range("I1:I" & .Range("I" & .Rows.Count).End(xlUp).Row).value
     End With
-    
+
     'Close recordset
     rst.Close
-    
+
     'Free objects
     Set cnn = Nothing
-    
+
     'Call format sub
     UL_Format
-    
+
     'Ensure control panel is active sheet
     Sheets("Control Panel").Activate
-    
+
     'Reset settings
     Application.EnableEvents = True
     Application.ScreenUpdating = True
@@ -193,39 +195,39 @@ Sub UL_Format()
     Dim iLRow               As Long
     Dim iLCol               As Integer
     Dim ws                  As Worksheet
-        
+
     'Initiate loop through worksheets
     For Each ws In Worksheets
         With ws
-        
+
             'Validate which sheet the loop is currently on
             If .Name = "Upload Sheet" Then
-            
+
                 'Reset upload sheet data
                 .Cells.value = ""
             Else
                 If .Name <> "DropDowns" And .Name <> "Control Panel" And Not .Name Like "*Recover*" And Not .Name Like "*Insert*" And Not .Name = "Upload" Then
-                
+
                     'AutoFit
                     .Columns.ColumnWidth = 100
                     .Rows.RowHeight = 100
                     .Rows.AutoFit
                     .Columns.AutoFit
-            
+
                     'Find last row and column
                     iLRow = .Range("A" & .Rows.Count).End(xlUp).Row
                     iLCol = .Cells(1, .Columns.Count).End(xlToLeft).Column
-                    
+
                     'Reset borders
                     .Cells.Borders.LineStyle = xlNone
                     .Range(.Cells(1, 1), .Cells(iLRow, iLCol)).Borders.LineStyle = xlContinuous
-                                        
+
                     'Formatting tasks specific to Programs List sheet
                     If .Name = "Programs" Then
-                    
+
                         'Hide proper columns
                         .Columns("A:C").Hidden = True
-                    
+
                         'Add data validation to pertinant columns
                         .Cells.Validation.Delete
                         .Range("D2:F" & iLRow).Validation.Add xlValidateList, Formula1:="Y,N"
@@ -243,22 +245,22 @@ Sub UL_Format()
                             & Sheets("DropDowns").Range("F" & Sheets("DropDowns").Rows.Count).End(xlUp).Row
                         .Range("U2:U" & iLRow).Validation.Add xlValidateList, Formula1:="=DropDowns!$G$1:$G$" _
                             & Sheets("DropDowns").Range("G" & Sheets("DropDowns").Rows.Count).End(xlUp).Row
-                        
+
                         'Set range for conditionaly formatting
                         With .Range(.Cells(2, "K"), .Cells(iLRow, "K"))
-                        
+
                             'Delete existing conditional formatting
                             .FormatConditions.Delete
-                        
+
                             'Add conditional formatting
                             .FormatConditions.Add(xlExpression, xlEqual, Formula1:="=($K2-$J2)=6").Interior.Color = RGB(137, 191, 101)
                             .FormatConditions.Add(xlCellValue, xlLess, "=" & CLng(DateSerial(Year(Now), Month(Now) + 1, 11))).Interior.Color = RGB(250, 120, 120)
                         End With
                     End If
-                    
+
                     'Hide appropriate columns
                     .Columns("A:B").Hidden = True
-            
+
                     'Protect Worsheet
                     .Cells.Locked = False
                     .Range(.Cells(1, .Columns.Count).End(xlToLeft).Offset(0, 1), .Cells(1, .Columns.Count)).Locked = True
@@ -269,9 +271,9 @@ Sub UL_Format()
             End If
         End With
     Next
-    
+
     MsgBox "Done"
-    
+
 End Sub
 
 Sub Upload_Programs()
@@ -288,23 +290,23 @@ Sub Upload_Programs()
     Dim i                   As Long
     Dim m                   As Long
     Dim iSheet              As Integer
-    
+
     'Reset settings on error
     On Error GoTo errorStep:
-        
+
     'Focus on upload sheet
     With Sheets("Upload Sheet")
-        
+
         'Ensure there is data to parse
         If .Range("A2") = "" And .Range("C2") = "" And .Range("E2") = "" Then
             Exit Sub
         End If
-        
+
         'Establish connection to SSMS
         strCnn = "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
         cnn.Open strCnn
         cnn.CommandTimeout = 900
-    
+
         'Create dictionary for SSMS fields
         With dictUL
             .Add 1, Array("MAX(LEN(PROGRAM_ID)) ", "CUSTOMER ", "CUSTOMER ", 8, 3, 3, "GROUP BY CUSTOMER_ID", "", "", "_programs", "_customer", "_deviation")
@@ -336,32 +338,32 @@ Sub Upload_Programs()
             .Add "A1", 3
             .Add "A2", 5
         End With
-    
+
         'Ensure there is data to parse on
         For iSheet = 0 To 2
-        
+
             'Ensure there is data to parse
             If .Cells(2, dictUL("A" & iSheet)) <> "" Then
-        
+
                 'Remove duplicates and sort
                 .Range(.Cells(2, dictUL("A" & iSheet)), .Cells(.Rows.Count, dictUL("A" & iSheet) + 1).End(xlUp)).RemoveDuplicates _
                     Columns:=Array(1, 2), Header:=xlNo
                 .Range(.Cells(2, dictUL("A" & iSheet)), .Cells(.Rows.Count, dictUL("A" & iSheet) + 1).End(xlUp)).Sort _
                     Key1:=.Cells(2, dictUL("A" & iSheet) + 1), Order1:=xlAscending, Header:=xlNo
-                    
+
                 'Loop through upload sheet to find address of fields that were changed
                 For i = 2 To .Cells(.Rows.Count, dictUL("A" & iSheet)).End(xlUp).Row
-                    
+
                     'Ensure customer and program IDs are populated
                     If Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1), 1) = "" Then
-                        
+
                         'Pull cusomter ID from customer profile table
                         rst.Open "SELECT DISTINCT CUSTOMER_ID FROM UL_Account_Ass WHERE CUSTOMER_NAME = '" & Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1), dictUL(1)(iSheet + 3)) & "' ", cnn
-                            
+
                         'Paste CID
                         Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1), 2).CopyFromRecordset rst
                         rst.Close
-                        
+
                         'lookup program ID
                         rst.Open "SELECT DISTINCT CUSTOMER_ID, MAX(CAST(right(PROGRAM_ID, charindex('-', reverse(PROGRAM_ID)) - 1) AS INT)) + 1 " _
                             & "FROM UL_Programs " _
@@ -375,16 +377,16 @@ Sub Upload_Programs()
                         End If
                         rst.Close
                     End If
-                
+
                     'Setup sub loop integer and update string
                     varUpd = ""
                     strVal = ""
                     strIns = ""
                     m = i
-                    
+
                     'Loop through like rows
                     Do While .Cells(i, dictUL("A" & iSheet) + 1) = .Cells(m, dictUL("A" & iSheet) + 1)
-                    
+
                         'Create update string and value string
                         If varUpd = "" Then
                             varUpdCol = dictUL(.Cells(m, dictUL("A" & iSheet)).value)(iSheet)
@@ -401,14 +403,14 @@ Sub Upload_Programs()
                                     & iSheet) + 1), .Cells(m, dictUL("A" & iSheet))).value, "'", "") & "'"
                             End If
                         End If
-                        
+
                         'Iterate sub loop
                         m = m + 1
                     Loop
-                    
+
                     'Reset upload look row
                     i = m - 1
-                    
+
                     'loop through row to be inserted
                     For Each r In Sheets(iSheet + 1).Range(Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1).value, 2), _
                         Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1).value, Sheets(iSheet + 1).Cells(1, Sheets(iSheet + 1).Columns.Count).End(xlToLeft).Column))
@@ -430,37 +432,37 @@ Sub Upload_Programs()
                             End If
                         End If
                     Next
-                    
+
                     'Determine which form of upload to use for proper data management
                     If InStr(varUpdCol, "START_DATE") > 0 Or Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1), 1) = "" Then
-                    
+
                         'Check if new line
                         If Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1), 1) <> "" Then
-                        
+
                             'Query old end date
                             rst.Open "SELECT MAX(END_DATE) AS ED FROM UL_Programs WHERE PRIMARY_KEY = " & Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1), 1), cnn
-                            
+
                             'Update previous agreement end date
                             If CLng(rst.Fields("ED")) >= CLng(Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1), 10)) Then cnn.Execute _
                                 ("EXEC update_end_programs '" & CLng(DateAdd("d", -3, Sheets(iSheet + 1).Range("J" _
                                 & .Cells(i, dictUL("A" & iSheet) + 1).value))) & "','" _
                                 & Sheets(iSheet + 1).Range("A" & .Cells(i, dictUL("A" & iSheet) + 1).value).value & "'")
-                                
+
                             'Close recorset
                             rst.Close
                         End If
-                        
+
                         'Insert new agreement line
                         If Left(strVal, 1) <> "," Then cnn.Execute ("EXEC insert" & dictUL(1)(iSheet + 9) & " " & strVal)
                     Else
-                    
+
                         'Delete edited agreement line
                         cnn.Execute ("EXEC delete_update" & dictUL(1)(iSheet + 9) & " " & Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1).value, 1).value)
-                        
+
                         'Insert new agreement line
                         cnn.Execute ("EXEC insert" & dictUL(1)(iSheet + 9) & " " & strVal)
                     End If
-                    
+
                     'Insert Primary Key if not already populated
                     If iSheet = 0 Then
                         rst.Open "SELECT MAX(PRIMARY_KEY) AS PKEY FROM UL_Programs WHERE PROGRAM_ID = '" & Sheets(iSheet + 1).Cells(.Cells(i, dictUL("A" & iSheet) + 1), 3) & "'", cnn
@@ -470,17 +472,17 @@ Sub Upload_Programs()
                 Next
             End If
         Next
-            
+
         'Clear Upload Sheet
         .Cells.value = ""
     End With
 
     'Free Objects
     Set cnn = Nothing
-    
+
     'Exit macro
     Exit Sub
-    
+
 'Reset settings on error
 errorStep:
     MsgBox "You've run into an unexpected error. Please save a copy of this CAL before refreshing."
@@ -494,23 +496,23 @@ Sub Delete_Programs(iRow As Long, strSht As String, strFields As String, strTabl
     Dim rst                 As New ADODB.Recordset
     Dim strCnn              As String
     Dim strVal              As String
-   
+
     'Ensure correct sheet is active
     With Sheets(strSht)
-    
+
         'Ensure there is data to parse
         If .Cells(iRow, 1) = "" Then
             Exit Sub
         End If
-        
+
         'Establish connection to SSMS
         strCnn = "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
         cnn.Open strCnn
         cnn.CommandTimeout = 900
-        
+
         'Loop through row to be deleted
         For Each r In .Range(.Cells(iRow, 2), .Cells(iRow, .Cells(1, Columns.Count).End(xlToLeft).Column))
-            
+
             'Create value string for insert statement
             If strVal = "" Then
                 strVal = r.value
@@ -522,14 +524,14 @@ Sub Delete_Programs(iRow As Long, strSht As String, strFields As String, strTabl
                 End If
             End If
         Next
-        
+
         'Insert deleted record into archive table
         cnn.Execute ("EXEC insert" & strTable & " " & strVal & ",'" & Application.Username & "'")
-            
+
         'Delete record from main programs table
         cnn.Execute ("EXEC delete" & strTable & " '" & Cells(iRow, iDel).value & "'")
     End With
-    
+
     'Free objects
     Set cnn = Nothing
 

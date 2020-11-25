@@ -1,5 +1,6 @@
 Attribute VB_Name = "IN_PROGRESS"
 
+
 '*******************************
 'Declare local moduel variables
 '*******************************
@@ -285,62 +286,93 @@ Function GetInsertString(var As Variant, iRow As Integer) As String
             & var(oPrgms.ColIndex("CUSTOMER"), iRow) & "' " _
             & "GROUP BY CUSTOMER_ID", cnn
 
-        'Assemble SQL insert string
-        strRow = rst.Fields("CID").value & ",'" & rst.Fields("CID").value & "-" & rst.Fields("PID").value & "'"
+        'Assemble first 3 fields of SQL insert string
+        strRow = rst.Fields("CID").value & ",'" & rst.Fields("CID").value _
+            & "-" & rst.Fields("PID").value & "'"
 
+        'Close and free objects
         rst.Close
         cnn.Close
         Set rst = Nothing
         Set cnn = Nothing
     Else
 
-        strRow = var(oPrgms.ColIndex("CUSTOMER_ID"), iRow) & ",'" & var(oPrgms.ColIndex("PROGRAM_ID"), iRow) & "'"
+        'Assemble first 3 fields of SQL insert string
+        strRow = var(oPrgms.ColIndex("CUSTOMER_ID"), iRow) & ",'" _
+            & var(oPrgms.ColIndex("PROGRAM_ID"), iRow) & "'"
     End If
 
+    'Loop through each column of passthrough array
     For iCol = oPrgms.ColIndex("DAB") To UBound(var, 1)
 
+        'Assemble SQL insert string
         strVal = Validate(var(iCol, iRow), iCol, iRow)
 
+        'Assemble array of insert rows
         strRow = strRow & "," & strVal
     Next
 
+    'Return SQL insert string
     GetInsertString = strRow
-
 End Function
 
+
+'*******************************************************************************
+'Returns no value - executes SQL update statement to CAL database. Passthrough
+'variable is an array of update statements, one element per statement.
+'*******************************************************************************
 Function UploadChanges(upd As Variant)
 
+    'Declare function variables
     Dim i As Integer
 
+    'Loop through each update statement in passthrough array
     For i = 0 To UBound(upd)
 
+        'Execute update statement
         cnn.Execute "UPDATE UL_Programs SET " & upd(i)
-
     Next
-
 End Function
 
+
+'*******************************************************************************
+'Returns no value - execute SQL insert statement to CAL database. passthrough
+'variables are an array of insert statements (one element per statement) and
+'an array with the corresponding excel row numbers.
+'*******************************************************************************
 Function InsertNew(ins As Variant, insRow As Variant)
 
+    'Declare function variables
     Dim i As Integer
 
+    'Loop through each insert statement in passthrough array
     For i = 0 To UBound(ins)
 
+        'Execute insert statement & return primary key, customer and program ID
         rst.Open "INSERT INTO UL_Programs " _
             & "OUTPUT inserted.PRIMARY_KEY AS PKEY, " _
             & "inserted.CUSTOMER_ID AS CID, " _
             & "inserted.PROGRAM_ID AS PID " _
             & "VALUES(" & ins(i) & ")", cnn
 
-        Cells(insRow(i), oPrgms.ColIndex("PRIMARY_KEY") + 1).value = rst.Fields("PKEY").value
-        Cells(insRow(i), oPrgms.ColIndex("CUSTOMER_ID") + 1).value = rst.Fields("CID").value
-        Cells(insRow(i), oPrgms.ColIndex("PROGRAM_ID") + 1).value = rst.Fields("PID").value
+        'Update Excel file (programs) with primary key, customer and program ID
+        Cells(insRow(i), oPrgms.ColIndex("PRIMARY_KEY") + 1).value = _
+            rst.Fields("PKEY").value
+        Cells(insRow(i), oPrgms.ColIndex("CUSTOMER_ID") + 1).value = _
+            rst.Fields("CID").value
+        Cells(insRow(i), oPrgms.ColIndex("PROGRAM_ID") + 1).value = _
+            rst.Fields("PID").value
 
+        'Close recordset
         rst.Close
-
     Next
-
 End Function
+
+
+
+
+
+
 
 Sub Fake_Refresh()
 
@@ -371,7 +403,5 @@ Sub Fake_Save()
         cnn.Close
         Set cnn = Nothing
     End If
-
-
 
 End Sub
