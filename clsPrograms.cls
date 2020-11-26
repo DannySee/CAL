@@ -13,7 +13,13 @@ Attribute VB_Exposed = False
 Private dictCol As New Scripting.Dictionary
 Private dictType As New Scripting.Dictionary
 Private dictIndex As New Scripting.Dictionary
-Private strFields As String
+Private strSheet As String
+
+Public Property Get Name() As String
+
+    Set Name = strSheet
+
+End Property
 
 Public Property Get Cols() As Scripting.Dictionary
 
@@ -34,7 +40,9 @@ Public Property Get ColIndex() As Scripting.Dictionary
 End Property
 
 Private Sub Class_Initialize()
-    
+
+    strSheet = "Programs"
+
     With dictCol
         .Add 0, "PRIMARY_KEY"
         .Add 1, "CUSTOMER_ID"

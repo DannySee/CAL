@@ -7,10 +7,12 @@ Attribute VB_Name = "Main".
 Public cnn As New ADODB.Connection
 Public rst As New ADODB.Recordset
 Public Programs As New Scripting.Dictionary
-Public custProfile As New Scripting.Dictionary
-Public devLoads As New Scripting.Dictionary
+Public cstProfile As New Scripting.Dictionary
+Public devLds As New Scripting.Dictionary
 Public oPrgms As New clsPrograms
 Public oCst As new clsCustProfile
+Public oDev As New clsDevLoads
+
 
 Sub Refresh_Data()
 
@@ -25,9 +27,13 @@ Sub Refresh_Data()
 
     Set Programs = Data_Maintenance.dctProgrmas(True)
 
-    Format.ShtRefresh("Customer Profile"), Query.GetCustProfile(netID))
+    Format.ShtRefresh("Customer Profile"), Query.GetCstProfile(netID))
 
-    Set custProfile = Data_Maintenance.dctProgrmas(True)
+    Set cstProfile = Data_Maintenance.dctCstProfile(True)
+
+    Format.ShtRefresh("Deviation Loads"), Query.GetDevLds(netID))
+
+    Set devLds = Data_Maintenance.dctDevLds(True)
 
 
 End Sub

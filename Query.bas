@@ -22,16 +22,33 @@ Function GetPrograms(netID As String) As ADODB.Recordset
 End Function
 
 
-Function GetCustProfile(netID As String) As ADODB.Recordset
+Function GetCstProfile(netID As String) As ADODB.Recordset
 
     rst.Open "SELECT DISTINCT * " _
         & "FROM UL_Customer_Profile " _
         & "WHERE CUSTOMER_ID IN (" _
             & "SELECT CUSTOMER_ID " _
             & "FROM UL_Account_Ass " _
-            & "OR T1_ID = '" & netID & "' " _
+            & "WHERE T1_ID = '" & netID & "' " _
             & "OR T2_ID = '" & netID & "') " _
         & "ORDER BY CUSTOMER", cnn
+
+    GetCustProfile = rst
+
+End Function
+
+
+Function GetDevLds(netID As String) As ADODB.Recordset
+
+    'Setup query string to pull in Programs sheet
+    rst.Open "SELECT DISTINCT * " _
+        & "FROM UL_Deviation_Loads " _
+        & "WHERE CUSTOMER_ID IN (" _
+            & "SELECT CUSTOMER_ID " _
+            & "FROM UL_Account_Ass " _
+            & "WHERE T1_ID = '" & netID & "' " _
+            & "OR T2_ID = '" & netID & "') " _
+        & "ORDER BY CUSTOMER, PROGRAM", cnn
 
     GetCustProfile = rst
 

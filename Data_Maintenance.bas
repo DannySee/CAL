@@ -2,9 +2,9 @@ Attribute VB_Name = "Data_Maintenance"
 
 
 '*******************************************************************************
-'Returns a static dicitonary of Program data (Key = Primary Key, Value = array
-'of fields). Boolean operator indicates if the dictionary needs to be
-'updated before it is returned.
+'Returns a static dictionary of Program data (Key = Primary Key, Value = array
+'of fields). Boolean parameter indicates if the dictionary needs to be updated
+'before it is returned.
 '*******************************************************************************
 Function dctPrograms(blUpdate As Boolean) As Scripting.Dictionary
 
@@ -20,9 +20,9 @@ End Function
 
 
 '*******************************************************************************
-'Returns a static dicitonary of Customer Profile data (Key = Primary Key, Value
-'= array of fields). Boolean operator indicates if the dictionary needs to
-'be updated before it is returned.
+'Returns a static dictionary of Customer Profile data (Key = Primary Key, Value
+'= array of fields). Boolean parameter indicates if the dictionary needs to be
+'updated before it is returned.
 '*******************************************************************************
 Function dctCstProfile(blUpdate As Boolean) As Scripting.Dictionary
 
@@ -33,14 +33,32 @@ Function dctCstProfile(blUpdate As Boolean) As Scripting.Dictionary
     If blUpdate Then Set dctCst = UpdateDct(dctCst, "Customer Profile")
 
     'Return static dictionary
-    Set dctPrograms = dctCst
+    Set dctCstProfile = dctCst
+End Function
+
+
+'*******************************************************************************
+'Returns a static dictionary of Deviation Loads (Key = Primary Key, Value =
+'array of fields). Boolean parameter indicates if the dictionary needs to be
+'updated before it is returned.
+'*******************************************************************************
+Function dctDevLds(blUpdate As Boolean) As Scripting.Dictionary
+
+    'declare static dictionary to hold program data
+    Static dctDev As New Scripting.Dictionary
+
+    'Update dictionary before its returned (if indicated by passthrough boolean)
+    If blUpdate Then Set dctDev = UpdateDct(dctDev, "Deviation Loads")
+
+    'Return static dictionary
+    Set dctDevLds = dctDev
 End Function
 
 
 '*******************************************************************************
 'Returns updated dictionary of Excel data (Key = Primary_Key, Value = Array
-'of fields). Meant to update the passthrough static dictionary from
-'passthrough sheet.
+'of fields). Meant to update the passthrough static dictionary from parameter
+'sheet.
 '*******************************************************************************
 Function UpdateDct(dct As Scripting.Dictionary, strSht As String) As _
     Scripting.Dictionary
@@ -81,8 +99,8 @@ End Function
 
 
 '*******************************************************************************
-'Return multidimensional array of Excel file. Pass through string indicates
-'tab's data should be returned.
+'Return multidimensional array of Excel file. Parameter indicates which tab's
+'data should be returned.
 '*******************************************************************************
 Function GetXL(strSheet As String) As Variant
 
@@ -115,17 +133,17 @@ End Function
 'Return multidimensional array of program data that was updated since the Static
 'dictionary was initialized. The first index of the return array contains
 'program elements to be updated. The second index contains program elements to
-'be inserted. Passthrough variables are the static dictionary with historical
-'program data and a multidimensional array of current program data.
+'be inserted. Parameters are the static dictionary with historical program data
+'and a multidimensional array of current program data.
 '*******************************************************************************
 Function ComparePrgms(old As Scripting.Dictionary, upd As Variant) As Variant
 
     'Declare function variables
     Dim iRow As Integer
     Dim iCol As Integer
-    Dim iSDateCol As Integer
-    Dim iCustCol As Integer
-    Dim iPKeyCol As Integer
+    Dim iSDte As Integer
+    Dim iCst As Integer
+    Dim iPKey As Integer
     Dim pKey As String
     Dim strInsert As String
     Dim strAssemble As String
@@ -133,17 +151,17 @@ Function ComparePrgms(old As Scripting.Dictionary, upd As Variant) As Variant
     Dim strVal As String
     Dim strInsRows As String
 
-    'Get column index for pertinant fields
-    iCustCol = oPrgms.ColIndex("CUSTOMER")
-    iSDateCol = oPrgms.ColIndex("START_DATE")
-    iPKeyCol = oPrgms.ColIndex("PRIMARY_KEY")
+    'Get fields index for pertinant data
+    iPKey = oPrgms.ColIndex("PRIMARY_KEY")
+    iCst = oPrgms.ColIndex("CUSTOMER")
+    iSDte = oPrgms.ColIndex("START_DATE")
 
     'Loop through rows of current program data
     For iRow = 0 To UBound(upd, 2)
 
         'If row is new with at least one field filled out (customer name)
-        If IsNull(upd(iPKeyCol, iRow)) Then
-            If upd(iCustCol, iRow) <> "" Then
+        If IsNull(upd(iPKey, iRow)) Then
+            If upd(iCst, iRow) <> "" Then
 
                 'Save SQL insert string (including each element of programs tab)
                 strInsert = Append(strInsert, "|", GetPrgmInsert(upd, iRow))
@@ -154,7 +172,7 @@ Function ComparePrgms(old As Scripting.Dictionary, upd As Variant) As Variant
         Else
 
             'Get current line program ID (used for SQL string)
-            pKey = upd(iPKeyCol, iRow)
+            pKey = upd(iPKey, iRow)
 
             'Set temp update SQL string to nothing
             strAssemble = ""
@@ -184,9 +202,9 @@ Function ComparePrgms(old As Scripting.Dictionary, upd As Variant) As Variant
 
                     'Save SQL update string to end date of previous record
                     strUpdate = Append(strUpdate, "|", "END_DATE = '" _
-                        & upd(iSDateCol, iRow) - 1 & "' " _
+                        & upd(iSDte, iRow) - 1 & "' " _
                         & "WHERE PRIMARY_KEY = " _
-                        & upd(iPKeyCol, iRow))
+                        & upd(iPKey, iRow))
 
                     'Save SQL insert string
                     strInsert = Append(strInsert, "|", _
@@ -200,7 +218,7 @@ Function ComparePrgms(old As Scripting.Dictionary, upd As Variant) As Variant
 
                 'Save SQL update string
                 strUpdate = Append(strUpdate, "|", strAssemble _
-                    & " WHERE PRIMARY_KEY = " & upd(iPKeyCol, iRow))
+                    & " WHERE PRIMARY_KEY = " & upd(iPKey, iRow))
             End If
         End If
     Next
@@ -210,24 +228,25 @@ Function ComparePrgms(old As Scripting.Dictionary, upd As Variant) As Variant
     If strInsert = "" Then strInsert = "0"
 
     'Return multidimensional array w/ update(0) and insert(1) SQL string arrays
-    Compare = Array(Split(strUpdate, "|"), Split(strInsert, "|"), _
+    ComparePrgms = Array(Split(strUpdate, "|"), Split(strInsert, "|"), _
         Split(strInsRows, "|"))
 End Function
 
 
 '*******************************************************************************
-'Return multidimensional array of program data that was updated since the Static
-'dictionary was initialized. The first index of the return array contains
-'program elements to be updated. The second index contains program elements to
-'be inserted. Passthrough variables are the static dictionary with historical
-'program data and a multidimensional array of current program data.
+'Return multidimensional array of Deviation Load data that was updated since the
+'Static dictionary was initialized. The first index of the return array contains
+'Deviation Loads elements to be updated. The second index contains program
+'elements to be inserted. Parameters are the static dictionary with historical
+'Deviation Load data and a multidimensional array of current Deviation Load data
 '*******************************************************************************
-Function CompareCst(old As Scripting.Dictionary, upd As Variant) As Variant
+Function CompareCstDev(old As Scripting.Dictionary, upd As Variant, _
+    oSht As Object) As Variant
 
     'Declare function variables
     Dim iRow As Integer
     Dim iCol As Integer
-    Dim iCust As Integer
+    Dim iCst As Integer
     Dim iPKey As Integer
     Dim pKey As String
     Dim strInsert As String
@@ -237,18 +256,22 @@ Function CompareCst(old As Scripting.Dictionary, upd As Variant) As Variant
     Dim strInsRows As String
 
     'Get column index for pertinant fields
-    iPKey = oPrgms.ColIndex("PRIMARY_KEY")
-    iCust = oPrgms.ColIndex("CUSTOMER")
+    iPKey = oSht.ColIndex("PRIMARY_KEY")
+    iCst = oSht.ColIndex("CUSTOMER")
 
     'Loop through rows of current program data
     For iRow = 0 To UBound(upd, 2)
 
         'If row is new with at least one field filled out (customer name)
         If IsNull(upd(iPKey, iRow)) Then
-            If upd(iCust, iRow) <> "" Then
+            If upd(iCst, iRow) <> "" Then
 
-                'Save SQL insert string (including each element of programs tab)
-                strInsert = Append(strInsert, "|", GetCstInsert(upd, iRow))
+                'Save SQL insert string (including each element of Excel tab)
+                If oSht.Name = "Customer Profile" Then
+                    strInsert = Append(strInsert, "|", GetCstInsert(upd, iRow))
+                ElseIf oSht.Name = "Deviation Loads" Then
+                    strInsert = Append(strInsert, "|", GetDevInsert(upd,iRow))
+                End If
 
                 'Save array of insert rows
                 strInsRows = Append(strInsRows, "|", iRow + 2)
@@ -271,13 +294,9 @@ Function CompareCst(old As Scripting.Dictionary, upd As Variant) As Variant
                     'Get validated updated value
                     strVal = Validate(upd(iCol, iRow), iCol, iRow, False)
 
-                    'If update is datetime and entry is valid
-                    If strVal <> "'DateErr'" Then
-
-                        'Add entry to udate SQL string
-                        strAssemble = Append(strAssemble, ",", _
-                            oCst.Cols(iCol) & " = " & strVal)
-                    End If
+                    'Add entry to udate SQL string
+                    strAssemble = Append(strAssemble, ",", _
+                        oSht.Cols(iCol) & " = " & strVal)
                 End If
             Next
 
@@ -292,7 +311,7 @@ Function CompareCst(old As Scripting.Dictionary, upd As Variant) As Variant
     If strInsert = "" Then strInsert = "0"
 
     'Return multidimensional array w/ update(0) and insert(1) SQL string arrays
-    Compare = Array(Split(strUpdate, "|"), Split(strInsert, "|"), _
+    CompareCstDev = Array(Split(strUpdate, "|"), Split(strInsert, "|"), _
         Split(strInsRows, "|"))
 End Function
 
@@ -301,8 +320,8 @@ End Function
 'Return value which has been validated for its SQL field datatype. This Function
 'is meant to assist in assembling SQL update/insert strings to the UL_Programs
 'database. Passthrough variables are the string value to be validated and its
-'origin row/column. blDataType passthrough indicates if the data type needs to
-'be validated. Column/row index is from multidimensional array, not excel
+'origin row/column. Boolean parameter indicates if the data type needs to be
+'validated. Column/row index is from multidimensional array, not Excel
 'coordinates.
 '*******************************************************************************
 Function Validate(val As Variant, iCol As Integer, iRow As Integer, _
@@ -356,7 +375,7 @@ End Function
 
 
 '*******************************************************************************
-'Returns a concatenated string and separator.
+'Returns a concatenated string with separator.
 '*******************************************************************************
 Function Append(val As String, sep As String, val2 As String) As String
 
@@ -375,8 +394,8 @@ End Function
 
 '*******************************************************************************
 'Returns an SQL insert statement. Function is Specific to programs tab. Gutter
-'Data is Primary Key, Cusotmer ID and Program ID. Guts data is all other program
-'fields. Passthrough variables are multidimensional array of programs tab and
+'Data is Primary Key, Customer ID and Program ID. Guts data is all other program
+'fields. Parameters are multidimensional array of programs tab and
 'focus row index.
 '*******************************************************************************
 Function GetPrgmInsert(var As Variant, iRow As integer) As String
@@ -386,6 +405,7 @@ Function GetPrgmInsert(var As Variant, iRow As integer) As String
     Dim iCID As integer
     Dim iPID As integer
     Dim iDAB As integer
+    Dim iCst As Integer
     Dim strGutter As String
     Dim strGuts As String
 
@@ -394,7 +414,7 @@ Function GetPrgmInsert(var As Variant, iRow As integer) As String
     iCID = oPrgms.ColIndex("CUSTOMER_ID")
     iPID = oPrgms.ColIndex("PROGRAM_ID")
     iDAB = oPrgms.ColIndex("DAB")
-    iCust = oPrgms.ColIndex("CUSTOMER")
+    iCst = oPrgms.ColIndex("CUSTOMER")
 
     'If array does not contain customer ID data
     If IsNull(var(iPKey, iRow)) Then
@@ -408,7 +428,7 @@ Function GetPrgmInsert(var As Variant, iRow As integer) As String
             & "MAX(CAST(RIGHT(PROGRAM_ID, " _
             & "CHARINDEX('-', REVERSE(PROGRAM_ID)) - 1) AS INT)) + 1 AS PID " _
             & "FROM UL_Programs WHERE CUSTOMER = '" _
-            & var(iCust, iRow) & "' " _
+            & var(iCst, iRow) & "' " _
             & "GROUP BY CUSTOMER_ID", cnn
 
         'Assemble first 3 fields of SQL insert string
@@ -436,24 +456,24 @@ End Function
 
 
 '*******************************************************************************
-'Returns an SQL insert statement. Function is Specific to customer profile tab.
-'Gutter data is Primary Key, Cusotmer ID and Program ID. Guts data is all other
-'program fields. Passthrough variables are multidimensional array of programs
-'tab and focus row index.
+'Returns an SQL insert statement. Function is Specific to Customer Profile tab.
+'Gutter data is Primary Key and Cusotmer ID. Guts data is all other Customer
+'Profile fields. Parameters are multidimensional array of Customer Profile tab
+'and focus row index.
 '*******************************************************************************
-Function GetCstInsert(var As Variant, iRow As integer) As String
+Function GetCstDevInsert(var As Variant, iRow As integer) As String
 
     'Declare function variables
     Dim iPKey As Integer
     Dim iCID As integer
-    Dim iCust As integer
+    Dim iCst As integer
     Dim strGutter As String
     Dim strGuts As String
 
     'Get column index for pertinant fields
     iPKey = oCst.ColIndex("PRIMARY_KEY")
     iCID = oCst.ColIndex("CUSTOMER_ID")
-    iCust = oCst.ColIndex("CUSTOMER")
+    iCst = oCst.ColIndex("CUSTOMER")
 
     'If array does not contain customer ID data
     If IsNull(var(iPKey, iRow)) Then
@@ -465,7 +485,7 @@ Function GetCstInsert(var As Variant, iRow As integer) As String
         'Query customer and program IDs from customer name
         rst.Open "SELECT TOP 1 CUSTOMER_ID AS CID " _
             & "FROM UL_Customer_Profile WHERE CUSTOMER = '" _
-            & var(iCust, iRow) & "' ", cnn
+            & var(iCst, iRow) & "' ", cnn
 
         'Assemble first 3 fields of SQL insert string
         strGutter = rst.Fields("CID").value
@@ -482,18 +502,71 @@ Function GetCstInsert(var As Variant, iRow As integer) As String
     End If
 
     'Get concatenated string of all fields in SQL sytnax
-    strGuts = AppendRow(var, iRow, iCust, False)
+    strGuts = AppendRow(var, iRow, iCst, False)
 
     'Return Programs gutter
-    GetPrgmInsert = Append(strGutter, ",", strGuts)
+    GetCstInsert = Append(strGutter, ",", strGuts)
 End Function
 
 
 '*******************************************************************************
-'Returns a concatenated string in SQL syntax. Passthrough variables are a
-'multidimensional array with Excel data, the row index to be parsed and the
-'starting field index. Boolean value is to indicate if validation method
-'requires data type check.
+'Returns an SQL insert statement. Function is Specific to Deviation Loads tab.
+'Gutter data is Primary Key and Cusotmer ID. Guts data is all other Deviation
+'Loads fields. Parameters are multidimensional array of Deviation Loads tab and
+'focus row index.
+'*******************************************************************************
+Function GetDevInsert(var As Variant, iRow As integer) As String
+
+    'Declare function variables
+    Dim iPKey As Integer
+    Dim iCID As integer
+    Dim iCst As integer
+    Dim strGutter As String
+    Dim strGuts As String
+
+    'Get column index for pertinant fields
+    iPKey = oDev.ColIndex("PRIMARY_KEY")
+    iCID = oDev.ColIndex("CUSTOMER_ID")
+    iCst = oDev.ColIndex("CUSTOMER_NAME")
+
+    'If array does not contain customer ID data
+    If IsNull(var(iPKey, iRow)) Then
+
+        'Establish conection to SQL server
+        cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1" _
+            & ";DATABASE=Pricing_Agreements;"
+
+        'Query customer and program IDs from customer name
+        rst.Open "SELECT TOP 1 CUSTOMER_ID AS CID " _
+            & "FROM UL_Deviation_Loads WHERE CUSTOMER_NAME = '" _
+            & var(iCst, iRow) & "' ", cnn
+
+        'Assemble first 3 fields of SQL insert string
+        strGutter = rst.Fields("CID").value
+
+        'Close and free objects
+        rst.Close
+        cnn.Close
+        Set rst = Nothing
+        Set cnn = Nothing
+    Else
+
+        'Assemble first 3 fields of SQL insert string
+        strGutter = var(iCID, iRow)
+    End If
+
+    'Get concatenated string of all fields in SQL sytnax
+    strGuts = AppendRow(var, iRow, iCst, False)
+
+    'Return Programs gutter
+    GetDevInsert = Append(strGutter, ",", strGuts)
+End Function
+
+
+'*******************************************************************************
+'Returns a concatenated string in SQL syntax. Parameters are a multidimensional
+'array with Excel data, the row index to be parsed and the starting field index.
+'Boolean value is to indicate if validation method requires data type check.
 '*******************************************************************************
 Function AppendRow(var As Variant, iRow As Integer, _
     iStart As Integer, blType) As String
