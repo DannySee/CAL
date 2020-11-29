@@ -33,7 +33,7 @@ Sub ShtLock(strSheet As String)
 End Sub
 
 
-Sub Update(strSheet As String, upd As ADODB.Recordset)
+Sub ShtRefresh(strSheet As String, upd As ADODB.Recordset)
 
     ShtLock(strSheet)
 
@@ -43,7 +43,6 @@ Sub Update(strSheet As String, upd As ADODB.Recordset)
         .Range("A2:A" & iLRow + 1).EntireRow.Delete
         .Range("A2").CopyFromRecordset upd
         .Rows(1).AutoFilter
-        .Tab.Color = RGB(38, 38, 38)
     End With
 
     ShtUnlock(strSheet)

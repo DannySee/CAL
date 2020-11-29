@@ -25,7 +25,7 @@ Sub Refresh_Data()
 
     Format.ShtRefresh("Programs", Query.GetPrograms(netID))
 
-    Set Programs = Data_Maintenance.dctProgrmas(True)
+    Set Programs = Data_Maintenance.dctPrograms(True)
 
     Format.ShtRefresh("Customer Profile"), Query.GetCstProfile(netID))
 

@@ -592,10 +592,10 @@ End Function
 
 
 '*******************************************************************************
-'Executes SQL update statement to CAL database. Passthrough variable is an array
-'of update statements, one element per statement.
+'Executes SQL update statement to CAL database. Paramaters are an array of
+'update statements (one element per statement) and the SQL table.
 '*******************************************************************************
-Sub UploadChanges(upd As Variant)
+Sub UploadChanges(upd As Variant, strDb As String)
 
     'Declare function variables
     Dim i As Integer
@@ -604,7 +604,7 @@ Sub UploadChanges(upd As Variant)
     For i = 0 To UBound(upd)
 
         'Execute update statement
-        cnn.Execute "UPDATE UL_Programs SET " & upd(i)
+        cnn.Execute "UPDATE " & strDb " SET " & upd(i)
     Next
 End Sub
 
@@ -614,33 +614,67 @@ End Sub
 'array of insert statements (one element per statement) and an array with the
 'corresponding excel row numbers.
 '*******************************************************************************
-Sub InsertNew(ins As Variant, insRow As Variant)
+Sub InsertNew(ins As Variant, insRow As Variant, oSht As Object)
 
     'Declare function variables
     Dim i As Integer
+    Dim iPkey As Integer
+    Dim iCID As Integer
+    Dim iPID As Integer
+
+    'Get column (Excel) index for gutter columns
+    iPkey = oSht.ColIndex("PRIMARY_KEY") + 1
+    iCID = oSht.ColIndex("CUSTOMER_ID") + 1
+    iPID = oSht.ColIndex("PROGRAM_ID") + 1
 
     'Loop through each insert statement in passthrough array
     For i = 0 To UBound(ins)
 
         'Execute insert statement & return primary key, customer and program ID
-        rst.Open "INSERT INTO UL_Programs " _
+        rst.Open "INSERT INTO " & objSht.DB & " " _
             & "OUTPUT inserted.PRIMARY_KEY AS PKEY, " _
             & "inserted.CUSTOMER_ID AS CID, " _
             & "inserted.PROGRAM_ID AS PID " _
             & "VALUES(" & ins(i) & ")", cnn
 
-        'Update Excel file (programs) with primary key, customer and program ID
-        Cells(insRow(i), oPrgms.ColIndex("PRIMARY_KEY") + 1).value = _
-            rst.Fields("PKEY").value
-        Cells(insRow(i), oPrgms.ColIndex("CUSTOMER_ID") + 1).value = _
-            rst.Fields("CID").value
-        Cells(insRow(i), oPrgms.ColIndex("PROGRAM_ID") + 1).value = _
-            rst.Fields("PID").value
+        'Update Excel file with primary key & customer ID
+        Cells(insRow(i), iPkey).value = rst.Fields("PKEY").value
+        Cells(insRow(i), iCID).value = rst.Fields("CID").value
 
         'Close recordset
         rst.Close
+
+        'Is focus sheet Programs tab and program ID field blank?
+        If objSht.DB = "PROGRAMS" And Cells(insRow(i), iPID).Value = "" Then _
+            Cells(insRow(i), iPID).Value = GetID(Cells(insRow(i), iPKey).Value)
     Next
 End Sub
+
+
+'*******************************************************************************
+'Returns Program ID for new line. Parameter is the Primary Key by which the
+'Program ID should be pulled.
+'*******************************************************************************
+Function GetPID(pKey As Long) As string
+
+    'Declare functiuon variables
+    Dim pID As string
+
+    'Pull Program ID from the PROGRAMS table using the Primary Key parameter
+    rst.Open "SELECT PROGROM_ID " _
+        & "FROM PROGRAMS " _
+        & "WHERE PRIMARY_KEY = " & pKey, cnn
+
+    'Save query results
+    pID = rst.Fields("PROGRAM_ID").Value
+
+    'Close recordset
+    rst.Close
+
+    'Return Program ID
+    GetPID = pID
+End Function
+
 
 
 Sub Fake_Save()
