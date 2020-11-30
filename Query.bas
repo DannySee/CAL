@@ -1,8 +1,13 @@
 Attribute VB_Name = "Query"
 
 
+'*******************************************************************************
+'Query programs tab. Parameter is the user's network ID. Only pulls assigned
+'customers. Returns open recordset
+'*******************************************************************************
 Function GetPrograms(netID As String) As ADODB.Recordset
 
+    'Query program data for assigned customers
     rst.Open "SELECT * " _
         & "FROM UL_Programs " _
         & "INNER JOIN (" _
@@ -17,13 +22,18 @@ Function GetPrograms(netID As String) As ADODB.Recordset
             & "OR T2_ID = '" & netID & "')) " _
         & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
 
+    'Return query results
     GetPrograms = rst
-
 End Function
 
 
+'*******************************************************************************
+'Query Customer Profile tab. Parameter is the user's network ID. Only pulls
+'assigned customers. Returns open recordset
+'*******************************************************************************
 Function GetCstProfile(netID As String) As ADODB.Recordset
 
+    'Query customer profile data for assigned customers
     rst.Open "SELECT DISTINCT * " _
         & "FROM UL_Customer_Profile " _
         & "WHERE CUSTOMER_ID IN (" _
@@ -33,14 +43,18 @@ Function GetCstProfile(netID As String) As ADODB.Recordset
             & "OR T2_ID = '" & netID & "') " _
         & "ORDER BY CUSTOMER", cnn
 
+    'Return query results
     GetCustProfile = rst
-
 End Function
 
 
+'*******************************************************************************
+'Query Deviation Loads tab. Parameter is the user's network ID. Only pulls
+'assigned customers. Returns open recordset
+'*******************************************************************************
 Function GetDevLds(netID As String) As ADODB.Recordset
 
-    'Setup query string to pull in Programs sheet
+    'Query deviation load data for assigned customers
     rst.Open "SELECT DISTINCT * " _
         & "FROM UL_Deviation_Loads " _
         & "WHERE CUSTOMER_ID IN (" _
@@ -50,6 +64,83 @@ Function GetDevLds(netID As String) As ADODB.Recordset
             & "OR T2_ID = '" & netID & "') " _
         & "ORDER BY CUSTOMER, PROGRAM", cnn
 
+    'Return query results
     GetCustProfile = rst
+End Function
 
+
+'*******************************************************************************
+'Query all drop down list data. Returns multidimensional array
+'*******************************************************************************
+Function GetDropDwns() As Variant
+
+    'Declare function variables
+    Dim var As Variant
+
+    'Query drop down option list
+    rst.Open "SELECT DROP_DOWN " _
+        & "FROM UL_List_Options", cnn
+
+    'Create multidimensional array from query results
+    var = rst.GetRows()
+
+    'Close recordset
+    rst.Close
+
+    'Return multidimensional array of drop down list data
+    GetDropDowns = var
+End Function
+
+
+'*******************************************************************************
+'Query all assigned customer names. Parameter is user's network ID. Returns
+'array of customer names
+'*******************************************************************************
+Function GetMyCst(netID As String) As Variant
+
+    'Declare function variables
+    Dim var As Variant
+
+    'Query all assigned customer names
+    rst.Open "SELECT CUSTOMER_NAME " _
+        & "FROM UL_ACCOUNT_ASS " _
+        & "WHERE T1_ID = '" & netID & "' " _
+        & "OR T2_ID = '" & netID & "' " _
+        & "ORDER BY CUSTOMER_NAME", cnn
+
+    'Create array from query results
+    var = rst.GetRows()
+
+    'Close recordset
+    rst.Close
+
+    'Return Array of assigned customer names
+    GetMyCst = var
+End Function
+
+
+'*******************************************************************************
+'Query all unassigned customer names. Parameter is user's network ID. Returns
+'array of customer names
+'*******************************************************************************
+Function GetOthCst(netID As String) As Variant
+
+    'Declare function variables
+    Dim var As Variant
+
+    'Query all unassigned customer names
+    rst.Open "SELECT CUSTOMER_NAME " _
+        & "FROM UL_ACCOUNT_ASS " _
+        & "WHERE T1_ID <> '" & netID & "' " _
+        & "AND T2_ID <> '" & netID & "' " _
+        & "ORDER BY CUSTOMER_NAME", cnn
+
+    'Create array from query results
+    var = rst.GetRows()
+
+    'Close recordset
+    rst.Close
+
+    'Return array of unassigned customer names
+    GetOthCst = var
 End Function
