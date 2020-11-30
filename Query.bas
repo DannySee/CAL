@@ -5,7 +5,7 @@ Attribute VB_Name = "Query"
 'Query programs tab. Parameter is the user's network ID. Only pulls assigned
 'customers. Returns open recordset
 '*******************************************************************************
-Function GetPrograms(netID As String) As ADODB.Recordset
+Function GetPrograms() As ADODB.Recordset
 
     'Query program data for assigned customers
     rst.Open "SELECT * " _
@@ -31,7 +31,7 @@ End Function
 'Query Customer Profile tab. Parameter is the user's network ID. Only pulls
 'assigned customers. Returns open recordset
 '*******************************************************************************
-Function GetCstProfile(netID As String) As ADODB.Recordset
+Function GetCstProfile() As ADODB.Recordset
 
     'Query customer profile data for assigned customers
     rst.Open "SELECT DISTINCT * " _
@@ -52,7 +52,7 @@ End Function
 'Query Deviation Loads tab. Parameter is the user's network ID. Only pulls
 'assigned customers. Returns open recordset
 '*******************************************************************************
-Function GetDevLds(netID As String) As ADODB.Recordset
+Function GetDevLds() As ADODB.Recordset
 
     'Query deviation load data for assigned customers
     rst.Open "SELECT DISTINCT * " _
@@ -96,7 +96,7 @@ End Function
 'Query all assigned customer names. Parameter is user's network ID. Returns
 'array of customer names
 '*******************************************************************************
-Function GetMyCst(netID As String) As Variant
+Function GetMyCst() As Variant
 
     'Declare function variables
     Dim var As Variant
@@ -123,7 +123,7 @@ End Function
 'Query all unassigned customer names. Parameter is user's network ID. Returns
 'array of customer names
 '*******************************************************************************
-Function GetOthCst(netID As String) As Variant
+Function GetOthCst() As Variant
 
     'Declare function variables
     Dim var As Variant
