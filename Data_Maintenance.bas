@@ -76,7 +76,7 @@ Function UpdateDct(dct As Scripting.Dictionary, strSht As String) As _
     dct.RemoveAll
 
     'Save multidimensional array of program data
-    var = GetXL(strSht & "$")
+    var = GetXL(strSht)
 
     'Create an empty array with an index for each program field'
     ReDim arr(UBound(var, 1))
@@ -113,7 +113,7 @@ Function GetXL(strSheet As String) As Variant
         "Extended Properties=""Excel 12.0 Xml;HDR=YES"";"
 
     'Query file (from passthrough sheet) and return results in an open recordset
-    rst.Open "SELECT * FROM [" & strSheet & "]", stCon
+    rst.Open "SELECT * FROM [" & strSheet & "$] ORDER BY PRIMARY_KEY", stCon
 
     'Parse recordset into an multidimensional array
     If Not rst.EOF Then var = rst.GetRows()
@@ -591,64 +591,46 @@ Function AppendRow(var As Variant, iRow As Integer, _
 End Function
 
 
-'*******************************************************************************
-'Executes SQL update statement to CAL database. Paramaters are an array of
-'update statements (one element per statement) and the SQL table.
-'*******************************************************************************
-Sub UploadChanges(upd As Variant, strDb As String)
 
-    'Declare function variables
-    Dim i As Integer
 
-    'Loop through each update statement in passthrough array
-    For i = 0 To UBound(upd)
 
-        'Execute update statement
-        cnn.Execute "UPDATE " & strDb " SET " & upd(i)
+'ITS A BINARY SEARCH!!!!
+Function GetDelID(old As Scripting.Dictionary upd As Variant) As string
+
+    Dim blFound As Boolean
+    Dim strDel As String
+    Dim iUpper As Integer
+    Dim iLower As Integer
+    Dim iMid As Integer
+
+
+
+    For Each key in old.keys
+
+        iLower = 0
+        iUpper = UBound(upd, 2)
+        blFound = False
+
+        Do While blFound = False and iUpper >= iLower
+
+            iMid = iLower + (iUpper - iLower)/2
+
+            If key < upd(0,iMid) Then
+
+                iLower = iMid + 1
+            ElseIf key > upd(0,iMid) Then
+
+                iUpper = iMid - 1
+            Else
+                blFound =True
+            End If
+        Loop
+
+        If blFound = False Then Append(strDel, ",", old(Key))
     Next
-End Sub
 
 
-'*******************************************************************************
-'Execute SQL insert statement to CAL database. passthrough variables are an
-'array of insert statements (one element per statement) and an array with the
-'corresponding excel row numbers.
-'*******************************************************************************
-Sub InsertNew(ins As Variant, insRow As Variant, oSht As Object)
 
-    'Declare function variables
-    Dim i As Integer
-    Dim iPkey As Integer
-    Dim iCID As Integer
-    Dim iPID As Integer
-
-    'Get column (Excel) index for gutter columns
-    iPkey = oSht.ColIndex("PRIMARY_KEY") + 1
-    iCID = oSht.ColIndex("CUSTOMER_ID") + 1
-    iPID = oSht.ColIndex("PROGRAM_ID") + 1
-
-    'Loop through each insert statement in passthrough array
-    For i = 0 To UBound(ins)
-
-        'Execute insert statement & return primary key, customer and program ID
-        rst.Open "INSERT INTO " & objSht.DB & " " _
-            & "OUTPUT inserted.PRIMARY_KEY AS PKEY, " _
-            & "inserted.CUSTOMER_ID AS CID, " _
-            & "inserted.PROGRAM_ID AS PID " _
-            & "VALUES(" & ins(i) & ")", cnn
-
-        'Update Excel file with primary key & customer ID
-        Cells(insRow(i), iPkey).value = rst.Fields("PKEY").value
-        Cells(insRow(i), iCID).value = rst.Fields("CID").value
-
-        'Close recordset
-        rst.Close
-
-        'Is focus sheet Programs tab and program ID field blank?
-        If objSht.DB = "PROGRAMS" And Cells(insRow(i), iPID).Value = "" Then _
-            Cells(insRow(i), iPID).Value = GetID(Cells(insRow(i), iPKey).Value)
-    Next
-End Sub
 
 
 '*******************************************************************************
@@ -676,28 +658,127 @@ Function GetPID(pKey As Long) As string
 End Function
 
 
+'*******************************************************************************
+'Executes SQL update statement to CAL database. Paramaters are an array of
+'update statements (one element per statement) and the SQL table.
+'*******************************************************************************
+Sub UploadChanges(upd As Variant, strDb As String)
+
+    'Declare function variables
+    Dim i As Integer
+
+    'Loop through each update statement in passthrough array
+    For i = 0 To UBound(upd)
+
+        'Execute update statement
+        cnn.Execute "UPDATE " & strDb " SET " & upd(i)
+    Next
+End Sub
 
 
+'*******************************************************************************
+'Execute SQL insert statement to CAL database. passthrough variables are an
+'array of insert statements (one element per statement) and an array with the
+'corresponding excel row numbers.
+'*******************************************************************************
+Sub InsertNew(ins As Variant, insRow As Variant, strDb As String)
 
-Sub Fake_Save()
+    'Declare function variables
+    Dim i As Integer
+    Dim iPkey As Integer
+    Dim iCID As Integer
+    Dim iPID As Integer
 
-    Dim Programs As New Scripting.Dictionary
-    Dim var     As Variant
-    Dim varChange As Variant
+    'Get column (Excel) index for gutter columns
+    iPkey = 1
+    iCID = 2
+    iPID = 3
 
-    Set Programs = dctPrograms(False)
-    var = GetXL("Programs$")
+    'Loop through each insert statement in passthrough array
+    For i = 0 To UBound(ins)
 
-    varChange = Compare(Programs, var)
+        'Execute insert statement & return primary key, customer and program ID
+        rst.Open "INSERT INTO " & strDb & " " _
+            & "OUTPUT inserted.PRIMARY_KEY AS PKEY, " _
+            & "inserted.CUSTOMER_ID AS CID, " _
+            & "VALUES(" & ins(i) & ")", cnn
 
-    If varChange(0)(0) <> 0 Or varChange(1)(0) <> 0 Then
+        'Update Excel file with primary key & customer ID
+        Cells(insRow(i), iPkey).value = rst.Fields("PKEY").value
+        Cells(insRow(i), iCID).value = rst.Fields("CID").value
 
-        cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+        'Close recordset
+        rst.Close
 
-        If varChange(0)(0) <> 0 Then UploadChanges (varChange(0))
-        If varChange(1)(0) <> 0 Then RetVal = InsertNew(varChange(1), varChange(2))
+        'Is focus sheet Programs tab and program ID field blank?
+        If strDb = "UL_Progrmas" And Cells(insRow(i), iPID).Value = "" Then _
+            Cells(insRow(i), iPID).Value = GetPID(Cells(insRow(i), iPKey).Value)
+    Next
+End Sub
 
-        cnn.Close
-        Set cnn = Nothing
-    End If
+
+'*******************************************************************************
+'Upload/inserts new worksheet records to the SQL server. Refresh static
+'dictionary after upload is complete.
+'*******************************************************************************
+Sub Push()
+
+    'Declare sub variables
+    Dim dctUpd As New Scripting.Dictionary
+    Dim dctDel As New Scripting.Dictionary
+    Dim updPrgms As Variant
+    Dim updCst  As Variant
+    Dim updDev As Variant
+
+    'Retrieve static dictionary with historical database
+    Programs = dctPrograms(False)
+    cstProfile = dctCstProfile(False)
+    devLds = dctDevLds(False)
+
+    'Get multidimensional array of current data
+    updPrgms = GetXL(oPrgms.Name))
+    updCst = GetXL(oCst.Name))
+    updDev = GetXL(oDev.Name))
+
+    'Create dictionary where key = database table and item is array of updates
+    With dctUpd
+        .Add oPrgms.Db, ComparePrgms(Programs, updPrgms)
+        .Add oCst.Db, CompareCstDev(cstProfile, updCst, oCst)
+        .Add oDev.Db, CompareCstDev(devLds, updDev, oDev)
+    End With
+
+    'Create dictionary where key = database table and item is array of updates
+    With dctDel
+        .Add oPrgms.Db, GetDelID(Programs, updPrgms)
+        .Add oCst.Db, GetDelID(cstProfile, updCst)
+        .Add oDev.Db, GetDelID(devLds, updDev)
+    End With
+
+    'Loop through each key in dictionary
+    For Each key In dctUpd
+
+        'If there are items to update/insert
+        If dctUpd(key)(0)(0) <> 0 Or  dctUpd(key)(1)(0) <> 0 Then
+
+            'Establish connection to SQL server
+            cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+                & "DATABASE=Pricing_Agreements;"
+
+            'If updates were made, push updates to the server
+            If dctUpd(key)(0)(0) <> 0 Then UploadChanges(dctUpd(key)(0), key)
+
+            'If new lines were inserted, push inserted lines to the server
+            If dctUpd(key)(1)(0) <> 0 Then InsertNew(dctUpd(key)(1), _
+                dctUpd(key)(2), key)
+
+            'Close connection and free objects
+            cnn.Close
+            Set cnn = Nothing
+        End If
+    Next
+
+    'Refresh static dictionaries with new data
+    Set Programs = dctPrograms(True)
+    Set cstProfile = dctCstProfile(True)
+    Set devLds = dctDevLds(True)
 End Sub
