@@ -591,46 +591,75 @@ Function AppendRow(var As Variant, iRow As Integer, _
 End Function
 
 
-
-
-
-'ITS A BINARY SEARCH!!!!
+'*******************************************************************************
+'Binary search algorithm returns a string of PROGRAM_IDs (for program tab) &
+'PRIMARY_KEYs (for customer profile & deviation loads) which are to be deleted
+'from their respective data tables.
+'*******************************************************************************
 Function GetDelID(old As Scripting.Dictionary upd As Variant) As string
 
+    'Declare function variables
     Dim blFound As Boolean
     Dim strDel As String
     Dim iUpper As Integer
     Dim iLower As Integer
     Dim iMid As Integer
 
-
-
+    'Loop through each key (PRIMARY_KEY) in static dictionary
     For Each key in old.keys
 
+        'Set high/low array index and boolean operator to identify matches
         iLower = 0
         iUpper = UBound(upd, 2)
         blFound = False
 
+        'Loop through array while a match has not been found
         Do While blFound = False and iUpper >= iLower
 
+            'Set mid point of array
             iMid = iLower + (iUpper - iLower)/2
 
-            If key < upd(0,iMid) Then
+            'If key value is greater than the array's middle index value
+            If key > upd(0,iMid) Then
 
+                'Set the low search index equal to current middle index + 1
                 iLower = iMid + 1
-            ElseIf key > upd(0,iMid) Then
 
+            'If key value is less than the array's middle index value
+            ElseIf key < upd(0,iMid) Then
+
+                'Set the high search index equal to current middle index - 1
                 iUpper = iMid - 1
+
+            'If key value is equal to the array's middle index value
             Else
+
+                'Identify a match
                 blFound =True
             End If
         Loop
 
-        If blFound = False Then Append(strDel, ",", old(Key))
+        'If a match was not found
+        If blFound = False Then
+
+            'If the object sheet is the Programs tab
+            If old(key)(2) = "PROGRAM_ID" Then
+
+                'Add PROGRAM_ID to return string (comma separator)
+                Append(strDel, ",", old(Key)(2))
+
+            'If the object sheet is the Customer Profile or Deviation Loads tab
+            Else
+
+                'Add PRIMARY_KEY to to return string (comma separator)
+                Append(strDel, ",", key)
+            End If
+        End if
     Next
 
-
-
+    'Return string of deletions
+    GetDelID = strDel
+End Function
 
 
 '*******************************************************************************
@@ -717,6 +746,12 @@ Sub InsertNew(ins As Variant, insRow As Variant, strDb As String)
 End Sub
 
 
+
+Sub DeleteRecords(strDel As String, strDb As String)
+
+End Sub
+
+
 '*******************************************************************************
 'Upload/inserts new worksheet records to the SQL server. Refresh static
 'dictionary after upload is complete.
@@ -754,28 +789,27 @@ Sub Push()
         .Add oDev.Db, GetDelID(devLds, updDev)
     End With
 
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
+
     'Loop through each key in dictionary
     For Each key In dctUpd
 
-        'If there are items to update/insert
-        If dctUpd(key)(0)(0) <> 0 Or  dctUpd(key)(1)(0) <> 0 Then
+        'If deletions were made, delete records from server
+        If dctDel(key) <> "" Then DeleteRecords(dictDel(key), key)
 
-            'Establish connection to SQL server
-            cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
-                & "DATABASE=Pricing_Agreements;"
+        'If updates were made, push updates to the server
+        If dctUpd(key)(0)(0) <> 0 Then UploadChanges(dctUpd(key)(0), key)
 
-            'If updates were made, push updates to the server
-            If dctUpd(key)(0)(0) <> 0 Then UploadChanges(dctUpd(key)(0), key)
-
-            'If new lines were inserted, push inserted lines to the server
-            If dctUpd(key)(1)(0) <> 0 Then InsertNew(dctUpd(key)(1), _
-                dctUpd(key)(2), key)
-
-            'Close connection and free objects
-            cnn.Close
-            Set cnn = Nothing
-        End If
+        'If new lines were inserted, push inserted lines to the server
+        If dctUpd(key)(1)(0) <> 0 Then InsertNew(dctUpd(key)(1), _
+            dctUpd(key)(2), key)
     Next
+
+    'Close connection and free objects
+    cnn.Close
+    Set cnn = Nothing
 
     'Refresh static dictionaries with new data
     Set Programs = dctPrograms(True)
