@@ -10,33 +10,64 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
 
+'Declare private class constants
+Private Const strSheet = "Customer Profile"
+Private Const strDb = "UL_Customer_Profile"
+
+'Declare private class variables
 Private dictCol As New Scripting.Dictionary
 Private dictType As New Scripting.Dictionary
 Private dictIndex As New Scripting.Dictionary
-Private strSheet As String
 
+
+'*******************************************************************************
+'Property to return class sheet name constant (Customer Profile)
+'*******************************************************************************
 Public Property Get Name() As String
 
-    Set Name = strSheet
-
+    'Return class sheet name
+    Name = strSheet
 End Property
 
+
+'*******************************************************************************
+'Property to return class database table constant (UL_Customer_Profile)
+'*******************************************************************************
+Public Property Get Db() As String
+
+    'Return class database table name
+    Db = strDb
+End Property
+
+
+'*******************************************************************************
+'Property to return dictionary of class database field indeces(Key) and
+'field names(Item).
+'*******************************************************************************
 Public Property Get Cols() As Scripting.Dictionary
 
+    'Return class database field dictionary
     Set Cols = dictCol
-
 End Property
 
+
+'*******************************************************************************
+'Property to return dictionary of class database field names(Key) and
+'field indeces(Item).
+'*******************************************************************************
 Public Property Get ColIndex() As Scripting.Dictionary
 
+    'Return class database field dictionary
     Set ColIndex = dictIndex
-
 End Property
 
+
+'*******************************************************************************
+'Initialize sub. Create dictionaries with column index & name keys
+'*******************************************************************************
 Private Sub Class_Initialize()
 
-    strSheet = "Customer Profile"
-
+    'Assemble dictionary of field indeces(key) and names(item)
     With dictCol
         .Add 0, "PRIMARY_KEY"
         .Add 1, "CUSTOMER_ID"
@@ -54,6 +85,7 @@ Private Sub Class_Initialize()
         .Add 13, "NOTES"
     End With
 
+    'Assemble dictionary of field names(key) and indeces(item)
     With dictIndex
         .Add "PRIMARY_KEY", 0
         .Add "CUSTOMER_ID", 1
@@ -70,5 +102,4 @@ Private Sub Class_Initialize()
         .Add "CUST_CONTACT", 12
         .Add "NOTES", 13
     End With
-
 End Sub

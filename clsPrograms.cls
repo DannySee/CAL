@@ -10,39 +10,75 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
 
+'Declare private class constants
+Private Const strSheet = "Programs"
+Private Cosnt strDb = "UL_Programs"
+
+'Declare private class variables
 Private dictCol As New Scripting.Dictionary
 Private dictType As New Scripting.Dictionary
 Private dictIndex As New Scripting.Dictionary
-Private strSheet As String
 
+
+'*******************************************************************************
+'Property to return class sheet name constant (Programs)
+'*******************************************************************************
 Public Property Get Name() As String
 
-    Set Name = strSheet
-
+    'Return class sheet name
+    Name = strSheet
 End Property
 
+
+'*******************************************************************************
+'Property to return class database table constant (UL_Programs)
+'*******************************************************************************
+Public Property Get Db() As String
+
+    'Return class database table name
+    Db = strDb
+End Property
+
+
+'*******************************************************************************
+'Property to return dictionary of class database field indeces(Key) and
+'field names(Item).
+'*******************************************************************************
 Public Property Get Cols() As Scripting.Dictionary
 
+    'Return class database field dictionary
     Set Cols = dictCol
-
 End Property
 
-Public Property Get ColType() As Scripting.Dictionary
 
-    Set ColType = dictType
-
-End Property
-
+'*******************************************************************************
+'Property to return dictionary of class database field names(Key) and
+'field indeces(Item).
+'*******************************************************************************
 Public Property Get ColIndex() As Scripting.Dictionary
 
+    'Return class database field dictionary
     Set ColIndex = dictIndex
-
 End Property
 
+
+'*******************************************************************************
+'Property to return dictionary of class database field indeces(Key) and
+'field type delimiter(Item). Delimiter is single quote(text) or not(number).
+'*******************************************************************************
+Public Property Get ColType() As Scripting.Dictionary
+
+    'Return class database field type dictionary
+    Set ColType = dictType
+End Property
+
+
+'*******************************************************************************
+'Initialize sub. Create dictionaries with column index & name keys
+'*******************************************************************************
 Private Sub Class_Initialize()
 
-    strSheet = "Programs"
-
+    'Assemble dictionary of field indeces(key) and names(item)
     With dictCol
         .Add 0, "PRIMARY_KEY"
         .Add 1, "CUSTOMER_ID"
@@ -71,6 +107,7 @@ Private Sub Class_Initialize()
         .Add 24, "COMMENTS"
     End With
 
+    'Assemble dictionary of field names(key) and indeces(item)
     With dictIndex
         .Add "PRIMARY_KEY", 0
         .Add "CUSTOMER_ID", 1
@@ -99,6 +136,7 @@ Private Sub Class_Initialize()
         .Add "COMMENTS", 24
     End With
 
+    'Assemble dictionary of field indeces(key) and type delimiter(item)
     With dictType
         .Add 0, ""
         .Add 1, ""
@@ -126,5 +164,4 @@ Private Sub Class_Initialize()
         .Add 23, "'"
         .Add 24, "'"
     End With
-
 End Sub

@@ -2,8 +2,8 @@ Attribute VB_Name = "Format"
 
 
 'Declare private module constants
-Private const shtPWD = "Dac123am"
-Private const shtProperties = _
+Private Const shtPWD = "Dac123am"
+Private Const shtProperties = _
     "UserInterFaceOnly:=True, " & _
     "AllowFormattingCells:=True, " & _
     "AllowDeletingRows:=True, " & _
@@ -265,7 +265,7 @@ Sub AddDataValidation()
         For i = 0 To UBound(varPrgmRng)
 
             'Get last row of dropdown fields
-            iDropLR = .Cells(.Rows.Count, i + 1).End(xlUp).Row 
+            iDropLR = .Cells(.Rows.Count, i + 1).End(xlUp).Row
 
             'Save dropdown Range
             Set rngDrp = .Range(.Cells(1, i + 1), .Cells(iDropLR, i + 1))

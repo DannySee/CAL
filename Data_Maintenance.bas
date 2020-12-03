@@ -746,8 +746,23 @@ Sub InsertNew(ins As Variant, insRow As Variant, strDb As String)
 End Sub
 
 
-
+'*******************************************************************************
+'Execute SQL insert statement to CAL database. passthrough variables are an
+'array of insert statements (one element per statement) and an array with the
+'corresponding excel row numbers.
+'*******************************************************************************
 Sub DeleteRecords(strDel As String, strDb As String)
+
+    Dim strField As string
+
+    If strDb = "UL_Programs" Then
+        strField = "PROGRAM_ID"
+    Else
+        strField = "PRIMARY_KEY"
+    End If
+
+    cnn.Execute "DELETE FROM " & strDb _
+        & "WHERE " & strField & " IN (" & strDel & ")"
 
 End Sub
 
