@@ -1,4 +1,4 @@
-Attribute VB_Name = "Data_Maintenance"
+Attribute VB_Name = "Push_Maintenance"
 
 
 '*******************************************************************************
@@ -336,7 +336,7 @@ Function Validate(val As Variant, iCol As Integer, iRow As Integer, _
     'If data type needs to be validated
     If blDataType = True Then
 
-        'Get string with datatype delimiters (quotes for text, nothing for number)
+        'Get string with datatype delimiters (quotes for text, blank for number)
         sep = oPrgms.ColType(iCol)
 
         'Get column index for pertinant fields

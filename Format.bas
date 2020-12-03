@@ -12,7 +12,6 @@ Private Const shtProperties = _
     "AllowSorting:=False, " & _
     "AllowFiltering:=True"
 
-
 'Declare private module variables
 Private iLRow As Long
 Private iLCol As Integer

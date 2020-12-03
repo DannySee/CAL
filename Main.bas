@@ -27,17 +27,17 @@ Sub Refresh_Data()
         "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
 
     'Format sheets and insert updated server data
-    Format.ShtRefresh("Programs", Query.GetPrograms)
-    Format.ShtRefresh("Customer Profile"), Query.GetCstProfile)
-    Format.ShtRefresh("Deviation Loads"), Query.GetDevLds)
+    Format.ShtRefresh("Programs", Pull.GetPrograms)
+    Format.ShtRefresh("Customer Profile"), Pull.GetCstProfile)
+    Format.ShtRefresh("Deviation Loads"), Pull.GetDevLds)
 
     'Add drop down lists file and include data validation on Programs tab
-    Format.AddDropDwns(Query.GetDropDwns, Query.GetMyCst, Query.GetOthCst)
+    Format.AddDropDwns(Pull.GetDropDwns, Pull.GetMyCst, Pull.GetOthCst)
 
     'Save all sheet data set to static dictionary
-    Set Programs = Data_Maintenance.dctPrograms(True)
-    Set cstProfile = Data_Maintenance.dctCstProfile(True)
-    Set devLds = Data_Maintenance.dctDevLds(True)
+    Set Programs = Push_Maintenance.dctPrograms(True)
+    Set cstProfile = Push_Maintenance.dctCstProfile(True)
+    Set devLds = Push_Maintenance.dctDevLds(True)
 
     'Close connection
     cnn.Close
