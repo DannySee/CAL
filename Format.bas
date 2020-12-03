@@ -2,8 +2,8 @@ Attribute VB_Name = "Format"
 
 
 'Declare private module constants
-Private Const shtPWD = "Dac123am"
-Private Const shtProperties = _
+Private Const shtPWD As String = "Dac123am"
+Private Const shtProperties As String = _
     "UserInterFaceOnly:=True, " & _
     "AllowFormattingCells:=True, " & _
     "AllowDeletingRows:=True, " & _
