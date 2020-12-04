@@ -12,10 +12,15 @@ Attribute VB_Exposed = False
 
 'Declare private class constants
 Private Const strSheet As String = "Programs"
-Private Cosnt strDb As String = "UL_Programs"
+Private Const strDb As String = "UL_Programs"
 Private Const iPKey As Integer = 0
+Private Const iCID As Integer = 1
+Private Const iPID As Integer = 2
+Private Const iDAB As Integer = 3
 Private Const iCst As Integer = 7
 Private Const iSDte As Integer = 9
+Private Const iEDte As Integer = 10
+Private Const iVend As Integer = 14
 
 'Declare private class variables
 Private dictCol As New Scripting.Dictionary
@@ -179,7 +184,7 @@ Function GetXL() As Variant
     Dim stCon as String
 
     'Save connection string (connection to CAL workbook)
-    stCon "Provider=Microsoft.ACE.OLEDB.12.0;" & _
+    stCon = "Provider=Microsoft.ACE.OLEDB.12.0;" & _
         "Data Source=" & ThisWorkbook.FullName & ";" & _
         "Extended Properties=""Excel 12.0 Xml;HDR=YES"";"
 
@@ -259,25 +264,253 @@ End Function
 
 
 '*******************************************************************************
+'Return value which has been validated for its SQL field datatype. This Function
+'is meant to assist in assembling SQL update/insert strings to the UL_Programs
+'database. Passthrough variables are the string value to be validated and its
+'origin row/column. Column/row index is from multidimensional array, not Excel
+'coordinates.
+'*******************************************************************************
+Function Validate(val As Variant, iCol As Integer, iRow As Integer) As String
+
+    'Declare function variables
+    Dim sep As String
+
+    'Get string with datatype delimiters (quotes for text, blank for number)
+    sep = dictType(iCol)
+
+    'If passthrough data type is datetime and value is invalid date
+    If (iCol = iSDte Or iCol = iEDte) And Not IsDate(val) Then
+
+        'Alert user of invalid date value
+        MsgBox "INVALID DATE: Please correct the " & dictCol(iCol) _
+            & " field - " & val & " is not a valid date entry"
+
+        'Highlight (select) row with invalid date value to alert user
+        Rows(iRow + 2).EntireRow.Select
+
+        'Return invalid date error message
+        val = "DateErr"
+
+    'If passthrough datatype is number and value is empty
+    ElseIf iCol = iVend And IsNull(val) Then
+
+        'Return 0 value (string to maintain function type)
+        val = "0"
+    End if
+
+    'Return validated value wrapped in datatype appropriate delimiter
+    Validate = sep & Replace(val, "'", "") & sep
+End Function
+
+
+'*******************************************************************************
+'Returns a concatenated string in SQL syntax. Parameters are a multidimensional
+'array with Excel data, the row index to be parsed.
+'*******************************************************************************
+Function AppendRow(var As Variant, iRow As Integer) As String
+
+    'Declare function variables
+    Dim iCol As Integer
+    Dim iStrt As Integer
+    Dim strVal As String
+    Dim strRow As String
+
+    'Set starting field index
+    iStrt = iDAB
+
+    'Loop through each column of passthrough array
+    For iCol = iStrt To UBound(var, 1)
+
+        'Assemble SQL insert string
+        strVal = Validate(var(iCol, iRow), iCol, iRow)
+
+        'Assemble array of insert rows
+        strRow = Append(strRow, ",", strVal)
+    Next
+
+    'Return SQL insert string
+    AppendRow = strRow
+End Function
+
+
+'*******************************************************************************
+'Returns an SQL insert statement. Gutter data is Primary Key, Customer ID and
+'Program ID. Guts data is all other program fields. Parameters are
+'multidimensional array of programs tab and focus row index.
+'*******************************************************************************
+Function GetIns(var As Variant, iRow As integer) As String
+
+    'Declare function variables
+    Dim strGutter As String
+    Dim strGuts As String
+
+    'If array does not contain customer ID data
+    If IsNull(var(iPKey, iRow)) Then
+
+        'Establish conection to SQL server
+        cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1" _
+            & ";DATABASE=Pricing_Agreements;"
+
+        'Query customer and program IDs from customer name
+        rst.Open "SELECT TOP 1 CUSTOMER_ID AS CID, " _
+            & "MAX(CAST(RIGHT(PROGRAM_ID, " _
+            & "CHARINDEX('-', REVERSE(PROGRAM_ID)) - 1) AS INT)) + 1 AS PID " _
+            & "FROM UL_Programs WHERE CUSTOMER = '" _
+            & var(iCst, iRow) & "' " _
+            & "GROUP BY CUSTOMER_ID", cnn
+
+        'Assemble first 3 fields of SQL insert string
+        strGutter = rst.Fields("CID").value & ",'" & rst.Fields("CID").value _
+            & "-" & rst.Fields("PID").value & "'"
+
+        'Close and free objects
+        rst.Close
+        cnn.Close
+        Set rst = Nothing
+        Set cnn = Nothing
+    Else
+
+        'Assemble first 3 fields of SQL insert string
+        strGutter = var(iCID, iRow) & ",'" & var(iPID, iRow) & "'"
+    End If
+
+    'Get concatenated string of all fields in SQL sytnax
+    strGuts = AppendRow(var, iRow)
+
+    'Return Programs gutter
+    GetIns = Append(strGutter, ",", strGuts)
+End Function
+
+
+'*******************************************************************************
+'Returns an SQL update statement. Gutter data is Primary Key, Customer ID and
+'Program ID. Guts data is all other program fields. Parameters are
+'multidimensional array of programs tab and focus row index.
+'*******************************************************************************
+Function GetUpd(old As Scripting.Dictionary, upd As Variant, _
+    iRow As Integer) As String
+
+    'Delcare function variables
+    Dim iCol As Integer
+    Dim pKey As String
+    Dim strVal As String
+    Dim strUpd As String
+
+    'Get current line program ID (used for SQL string)
+    pKey = upd(iPKey, iRow)
+
+    'Loop through columns of current program data
+    For iCol = 0 To UBound(upd, 1)
+
+        'If current data does not match static dictionary
+        If (old(pKey)(iCol) <> upd(iCol, iRow)) Or _
+            (IsNull(old(pKey)(iCol)) <> IsNull(upd(iCol, iRow))) Then
+
+            'Get validated updated value
+            strVal = Validate(upd(iCol, iRow), iCol, iRow)
+
+            'If update is datetime and entry is valid
+            If strVal <> "'DateErr'" Then
+
+                'Add entry to udate SQL string
+                strUpd = Append(strUpd, ",", dictCol(iCol) & " = " & strVal)
+            End If
+        End If
+    Next
+
+    'Return update strings
+    GetUpd = strUpd
+End Function
+
+
+'*******************************************************************************
+'Binary search algorithm returns a string of PROGRAM_IDs (for program tab) &
+'PRIMARY_KEYs (for customer profile & deviation loads) which are to be deleted
+'from their respective data tables.
+'*******************************************************************************
+Function GetDel(old As Scripting.Dictionary upd As Variant) As string
+
+    'Declare function variables
+    Dim blFound As Boolean
+    Dim strDel As String
+    Dim iUpper As Integer
+    Dim iLower As Integer
+    Dim iMid As Integer
+
+    'Loop through each key (PRIMARY_KEY) in static dictionary
+    For Each key in old.keys
+
+        'Set high/low array index and boolean operator to identify matches
+        iLower = 0
+        iUpper = UBound(upd, 2)
+        blFound = False
+
+        'Loop through array while a match has not been found
+        Do While blFound = False and iUpper >= iLower
+
+            'Set mid point of array
+            iMid = iLower + (iUpper - iLower)/2
+
+            'If key value is greater than the array's middle index value
+            If key > upd(0,iMid) Then
+
+                'Set the low search index equal to current middle index + 1
+                iLower = iMid + 1
+
+            'If key value is less than the array's middle index value
+            ElseIf key < upd(0,iMid) Then
+
+                'Set the high search index equal to current middle index - 1
+                iUpper = iMid - 1
+
+            'If key value is equal to the array's middle index value
+            Else
+
+                'Identify a match
+                blFound =True
+            End If
+        Loop
+
+        'If a match was not found
+        If blFound = False Then
+
+            'If the object sheet is the Programs tab
+            If old(key)(2) = "PROGRAM_ID" Then
+
+                'Add PROGRAM_ID to return string (comma separator)
+                Append(strDel, ",", old(Key)(2))
+
+            'If the object sheet is the Customer Profile or Deviation Loads tab
+            Else
+
+                'Add PRIMARY_KEY to to return string (comma separator)
+                Append(strDel, ",", key)
+            End If
+        End if
+    Next
+
+    'Return string of deletions
+    GetDel = strDel
+End Function
+
+
+'*******************************************************************************
 'Return multidimensional array of program data that was updated since the Static
 'dictionary was initialized. The first index of the return array contains
 'program elements to be updated. The second index contains program elements to
 'be inserted. Parameters are the static dictionary with historical program data
 'and a multidimensional array of current program data.
 '*******************************************************************************
-Function GetNewRecords() As Scripting.Dictionary
+Function GetChanges() As Scripting.Dictionary
 
     'Declare function variables
+    Dim dbChanges As Scripting.Dictionary
     Dim old As New Scripting.Dictionary
     Dim upd As Variant
-    Dim i As Integer
-    Dim iSDte As Integer
-    Dim iCst As Integer
-    Dim iPKey As Integer
-    Dim pKey As String
-    Dim strInsert As String
-    Dim strAssemble As String
-    Dim strUpdate As String
+    Dim iRow As Integer
+    Dim strIns As String
+    Dim strUpd As String
+    Dim strDel As String
     Dim strVal As String
     Dim strInsRows As String
 
@@ -287,84 +520,253 @@ Function GetNewRecords() As Scripting.Dictionary
     'Get new dictionary data (new data for comparison)
     Set upd = GetXL
 
-    'Loop through rows of current program data
+    'Loop through rows of current program data (will retrieve upd/ins strings)
     For iRow = 0 To UBound(upd, 2)
 
         'If row is new with at least one field filled out (customer name)
-        If IsNull(upd(iPKey, iRow)) Then
-            If upd(iCst, iRow) <> "" Then
+        If IsNull(upd(iPKey, iRow)) And Not IsNull(upd(iCst, iRow)) Then
 
-                'Save SQL insert string (including each element of programs tab)
-                strInsert = Append(strInsert, "|", GetPrgmInsert(upd, iRow))
+            'Save SQL insert string (including each element of programs tab)
+            strIns = Append(strIns, "|", GetIns(upd, iRow))
 
-                'Save array of insert rows
-                strInsRows = Append(strInsRows, "|", iRow + 2)
-            End If
-        Else
+            'Save array of Excel insert rows
+            strInsRows = Append(strInsRows, "|", iRow + 2)
 
+        'If row is not new
+        ElseIf Not IsNull(upd(iPKey, iRow))
 
-        'Loop through element of doctionary item array
-        For i = 0 To UBound(upd(Key))
-
-
-
-            'Get current line program ID (used for SQL string)
-            pKey = upd(iPKey, iRow)
-
-            'Set temp update SQL string to nothing
-            strAssemble = ""
-
-            'Loop through columns of current program data
-            For iCol = 0 To UBound(upd, 1)
-
-                'If current data does not match static dictionary
-                If (old(pKey)(iCol) <> upd(iCol, iRow)) Or _
-                    (IsNull(old(pKey)(iCol)) <> IsNull(upd(iCol, iRow))) Then
-
-                    'Get validated updated value
-                    strVal = Validate(upd(iCol, iRow), iCol, iRow, True)
-
-                    'If update is datetime and entry is valid
-                    If strVal <> "'DateErr'" Then
-
-                        'Add entry to udate SQL string
-                        strAssemble = Append(strAssemble, ",", _
-                            oPrgms.Cols(iCol) & " = " & strVal)
-                    End If
-                End If
-            Next
+            'Get SQL update string of any worksheet updates
+            strVal = GetUpd(old, upd, iRow)
 
             'If SQL update string contains start date change
-            If InStr(strAssemble, "START_DATE") <> 0 Then
+            If InStr(strVal, "START_DATE") <> 0 Then
 
-                    'Save SQL update string to end date of previous record
-                    strUpdate = Append(strUpdate, "|", "END_DATE = '" _
-                        & upd(iSDte, iRow) - 1 & "' " _
-                        & "WHERE PRIMARY_KEY = " _
-                        & upd(iPKey, iRow))
+                'Save SQL update string to end date of previous record
+                strUpd = Append(strUpd, "|", "END_DATE = '" _
+                    & upd(iSDte, iRow) - 1 & "' " _
+                    & "WHERE PRIMARY_KEY = " _
+                    & upd(iPKey, iRow))
 
-                    'Save SQL insert string
-                    strInsert = Append(strInsert, "|", _
-                        & GetPrgmInsert(upd, iRow))
+                'Save SQL insert string
+                strIns = Append(strIns, "|", & GetIns(upd, iRow))
 
-                    'Save an array of insert rows
-                    strInsRows = Append(strinsRows, "|", iRow + 2)
+                'Save an array of Excel insert rows
+                strInsRows = Append(strinsRows, "|", iRow + 2)
 
             'If SQL update string does not contain start date change
-            ElseIf strAssemble <> "" Then
+            ElseIf strVal <> "" Then
 
                 'Save SQL update string
-                strUpdate = Append(strUpdate, "|", strAssemble _
+                strUpd = Append(strUpd, "|", strVal _
                     & " WHERE PRIMARY_KEY = " & upd(iPKey, iRow))
             End If
         End If
     Next
 
-    'If update or insert string is blank (no changes) indicate blank w/ 0 value
-    If strUpdate = "" Then strUpdate = "0"
-    If strInsert = "" Then strInsert = "0"
+    'Get SQL delete string of any worksheet deletions
+    strDel = GetDel(old, upd)
+
+    'If there are any updated/deleted records, add them to change dictionary
+    If strUpd <> "" Then dbChanges("UPDATE") = Split(strUpd, "|")
+    If strDel <> "" Then dbChanges("DELETE") = Split(strUpd, "|")
+
+    'If there are any new records add them (and their excel index) to dictionary
+    If strIns <> "" Then
+        dbChanges("INSERT") = Split(strIns, "|")
+        dbChanges("ROWS") = Split(strInsRows, "|")
+    End If
 
     'Return multidimensional array w/ update(0) and insert(1) SQL string arrays
-    GetNewRecords = Array(Split(strUpdate, "|"), Split(strInsert, "|"), _
-        Split(strInsRows, "|"))
+    Set GetChanges = dbChanges
 End Function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'*******************************************************************************
+'Returns Program ID for new line. Parameter is the Primary Key by which the
+'Program ID should be pulled.
+'*******************************************************************************
+Function GetPID(pKey As Long) As string
+
+    'Declare functiuon variables
+    Dim pID As string
+
+    'Pull Program ID from the PROGRAMS table using the Primary Key parameter
+    rst.Open "SELECT PROGROM_ID " _
+        & "FROM PROGRAMS " _
+        & "WHERE PRIMARY_KEY = " & pKey, cnn
+
+    'Save query results
+    pID = rst.Fields("PROGRAM_ID").Value
+
+    'Close recordset
+    rst.Close
+
+    'Return Program ID
+    GetPID = pID
+End Function
+
+
+'*******************************************************************************
+'Executes SQL update statement to CAL database. Paramaters are an array of
+'update statements (one element per statement) and the SQL table.
+'*******************************************************************************
+Sub UpdateChanges(upd As Variant, strDb As String)
+
+    'Declare function variables
+    Dim i As Integer
+
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
+
+    'Loop through each update statement in passthrough array
+    For i = 0 To UBound(upd)
+
+        'Execute update statement
+        cnn.Execute "UPDATE " & strDb " SET " & upd(i)
+    Next
+End Sub
+
+
+'*******************************************************************************
+'Execute SQL insert statement to CAL database. passthrough variables are an
+'array of insert statements (one element per statement) and an array with the
+'corresponding excel row numbers.
+'*******************************************************************************
+Sub DeleteRecords(strDel As String)
+
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
+
+    cnn.Execute "DELETE FROM UL_Programs " _
+        & "WHERE PROGRAM_ID IN (" & strDel & ")"
+End Sub
+
+
+'*******************************************************************************
+'Execute SQL insert statement to CAL database. passthrough variables are an
+'array of insert statements (one element per statement) and an array with the
+'corresponding excel row numbers.
+'*******************************************************************************
+Sub InsertNew(ins As Variant, insRow As Variant, strDb As String)
+
+    'Declare function variables
+    Dim i As Integer
+    Dim iPkey As Integer
+    Dim iCID As Integer
+    Dim iPID As Integer
+
+    'Get column (Excel) index for gutter columns
+    iPkey = 1
+    iCID = 2
+    iPID = 3
+
+    'Loop through each insert statement in passthrough array
+    For i = 0 To UBound(ins)
+
+        'Execute insert statement & return primary key, customer and program ID
+        rst.Open "INSERT INTO " & strDb & " " _
+            & "OUTPUT inserted.PRIMARY_KEY AS PKEY, " _
+            & "inserted.CUSTOMER_ID AS CID, " _
+            & "VALUES(" & ins(i) & ")", cnn
+
+        'Update Excel file with primary key & customer ID
+        Cells(insRow(i), iPkey).value = rst.Fields("PKEY").value
+        Cells(insRow(i), iCID).value = rst.Fields("CID").value
+
+        'Close recordset
+        rst.Close
+
+        'Is focus sheet Programs tab and program ID field blank?
+        If strDb = "UL_Progrmas" And Cells(insRow(i), iPID).Value = "" Then _
+            Cells(insRow(i), iPID).Value = GetPID(Cells(insRow(i), iPKey).Value)
+    Next
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'*******************************************************************************
+'Upload/inserts new worksheet records to the SQL server. Refresh static
+'dictionary after upload is complete.
+'*******************************************************************************
+Sub Push()
+
+    'Declare sub variables
+    Dim dbChanges As New Scripting.Dictionary
+
+    'Retrieve workbook changes since last save
+    Set dbChanges = GetChanges
+
+    'If updates were made to worksheet fields, push updates to server
+    If dbChanges.Exists("UPDATE") Then UpdateChanges(dbChanges("UPDATE"))
+
+    'If updates were made to worksheet fields, push updates to server
+    If dbChanges.Exists("DELETE") Then DeleteRecords(dbChanges("DELETE"))
+
+    'If new lines were added to worksheet, push additionas to server
+    If dbChanges.Exists("INSERT") Then InsertNew(dbChanges("INSERT"), _
+        dbChanges("INSERT"))
+
+    'Refresh static dictionary to save new worksheet data
+    Set Programs = GetSaveData(True)
+End Sub
