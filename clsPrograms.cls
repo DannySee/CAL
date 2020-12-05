@@ -26,6 +26,8 @@ Private Const iVend As Integer = 14
 Private dictCol As New Scripting.Dictionary
 Private dictType As New Scripting.Dictionary
 Private dictIndex As New Scripting.Dictionary
+Private iCol As Integer
+Private iRow As Integer
 
 
 '*******************************************************************************
@@ -176,36 +178,6 @@ End Sub
 
 
 '*******************************************************************************
-'Return multidimensional array of Excel sheet data.
-'*******************************************************************************
-Function GetXL() As Variant
-
-    'Declare function variables
-    Dim stCon as String
-
-    'Save connection string (connection to CAL workbook)
-    stCon = "Provider=Microsoft.ACE.OLEDB.12.0;" & _
-        "Data Source=" & ThisWorkbook.FullName & ";" & _
-        "Extended Properties=""Excel 12.0 Xml;HDR=YES"";"
-
-    'Query file (from passthrough sheet) and return results in an open recordset
-    rst.Open "SELECT * FROM [" & strSheet & "$] ORDER BY PRIMARY_KEY", stCon
-
-    'Parse recordset into an multidimensional array
-    If Not rst.EOF Then var = rst.GetRows()
-
-    'Close recordset and connection & free objects
-    rst.Close
-    cnn.Close
-    Set rst = Nothing
-    Set cnn = Nothing
-
-    'Return multidimensional array of Excel data (from passthrough sheet)
-    GetXL = var
-End Function
-
-
-'*******************************************************************************
 'Returns updated dictionary of Excel data (Key = Primary_Key, Value = Array
 'of fields). Meant to update the passthrough dictionary with static dictionary.
 '*******************************************************************************
@@ -213,17 +185,11 @@ Function RefreshDct() As Scripting.Dictionary
 
     'Declare function variables
     Dim dct As New Scripting.Dictionary
-    Dim iRow As Integer
-    Dim iCol As Integer
-    Dim iPKey As Integer
     Dim arr As Variant
     Dim var As Variant
 
-    'Save customer column index (primary key is always first index)
-    iPKey = 0
-
     'Save multidimensional array of program data
-    var = GetXL
+    var = GetXL(strSheet)
 
     'Create an empty array with an index for each program field'
     ReDim arr(UBound(var, 1))
@@ -304,36 +270,6 @@ End Function
 
 
 '*******************************************************************************
-'Returns a concatenated string in SQL syntax. Parameters are a multidimensional
-'array with Excel data, the row index to be parsed.
-'*******************************************************************************
-Function AppendRow(var As Variant, iRow As Integer) As String
-
-    'Declare function variables
-    Dim iCol As Integer
-    Dim iStrt As Integer
-    Dim strVal As String
-    Dim strRow As String
-
-    'Set starting field index
-    iStrt = iDAB
-
-    'Loop through each column of passthrough array
-    For iCol = iStrt To UBound(var, 1)
-
-        'Assemble SQL insert string
-        strVal = Validate(var(iCol, iRow), iCol, iRow)
-
-        'Assemble array of insert rows
-        strRow = Append(strRow, ",", strVal)
-    Next
-
-    'Return SQL insert string
-    AppendRow = strRow
-End Function
-
-
-'*******************************************************************************
 'Returns an SQL insert statement. Gutter data is Primary Key, Customer ID and
 'Program ID. Guts data is all other program fields. Parameters are
 'multidimensional array of programs tab and focus row index.
@@ -355,7 +291,7 @@ Function GetIns(var As Variant, iRow As integer) As String
         rst.Open "SELECT TOP 1 CUSTOMER_ID AS CID, " _
             & "MAX(CAST(RIGHT(PROGRAM_ID, " _
             & "CHARINDEX('-', REVERSE(PROGRAM_ID)) - 1) AS INT)) + 1 AS PID " _
-            & "FROM UL_Programs WHERE CUSTOMER = '" _
+            & "FROM " & strDb & " WHERE CUSTOMER = '" _
             & var(iCst, iRow) & "' " _
             & "GROUP BY CUSTOMER_ID", cnn
 
@@ -375,7 +311,7 @@ Function GetIns(var As Variant, iRow As integer) As String
     End If
 
     'Get concatenated string of all fields in SQL sytnax
-    strGuts = AppendRow(var, iRow)
+    strGuts = AppendRow(var, iRow, iDAB)
 
     'Return Programs gutter
     GetIns = Append(strGutter, ",", strGuts)
@@ -391,7 +327,6 @@ Function GetUpd(old As Scripting.Dictionary, upd As Variant, _
     iRow As Integer) As String
 
     'Delcare function variables
-    Dim iCol As Integer
     Dim pKey As String
     Dim strVal As String
     Dim strUpd As String
@@ -474,18 +409,8 @@ Function GetDel(old As Scripting.Dictionary upd As Variant) As string
         'If a match was not found
         If blFound = False Then
 
-            'If the object sheet is the Programs tab
-            If old(key)(2) = "PROGRAM_ID" Then
-
-                'Add PROGRAM_ID to return string (comma separator)
-                Append(strDel, ",", old(Key)(2))
-
-            'If the object sheet is the Customer Profile or Deviation Loads tab
-            Else
-
-                'Add PRIMARY_KEY to to return string (comma separator)
-                Append(strDel, ",", key)
-            End If
+            'Add PROGRAM_ID to return string (comma separator)
+            Append(strDel, ",", old(Key)(2))
         End if
     Next
 
@@ -507,7 +432,6 @@ Function GetChanges() As Scripting.Dictionary
     Dim dbChanges As Scripting.Dictionary
     Dim old As New Scripting.Dictionary
     Dim upd As Variant
-    Dim iRow As Integer
     Dim strIns As String
     Dim strUpd As String
     Dim strDel As String
@@ -518,7 +442,7 @@ Function GetChanges() As Scripting.Dictionary
     Set old = GetSaveData(False)
 
     'Get new dictionary data (new data for comparison)
-    Set upd = GetXL
+    Set upd = GetXL(strSheet)
 
     'Loop through rows of current program data (will retrieve upd/ins strings)
     For iRow = 0 To UBound(upd, 2)
@@ -568,7 +492,7 @@ Function GetChanges() As Scripting.Dictionary
 
     'If there are any updated/deleted records, add them to change dictionary
     If strUpd <> "" Then dbChanges("UPDATE") = Split(strUpd, "|")
-    If strDel <> "" Then dbChanges("DELETE") = Split(strUpd, "|")
+    If strDel <> "" Then dbChanges("DELETE") = strDel
 
     'If there are any new records add them (and their excel index) to dictionary
     If strIns <> "" Then
@@ -581,67 +505,11 @@ Function GetChanges() As Scripting.Dictionary
 End Function
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'*******************************************************************************
-'Returns Program ID for new line. Parameter is the Primary Key by which the
-'Program ID should be pulled.
-'*******************************************************************************
-Function GetPID(pKey As Long) As string
-
-    'Declare functiuon variables
-    Dim pID As string
-
-    'Pull Program ID from the PROGRAMS table using the Primary Key parameter
-    rst.Open "SELECT PROGROM_ID " _
-        & "FROM PROGRAMS " _
-        & "WHERE PRIMARY_KEY = " & pKey, cnn
-
-    'Save query results
-    pID = rst.Fields("PROGRAM_ID").Value
-
-    'Close recordset
-    rst.Close
-
-    'Return Program ID
-    GetPID = pID
-End Function
-
-
 '*******************************************************************************
 'Executes SQL update statement to CAL database. Paramaters are an array of
-'update statements (one element per statement) and the SQL table.
+'update statements (one element per statement).
 '*******************************************************************************
-Sub UpdateChanges(upd As Variant, strDb As String)
+Sub UploadChanges(upd As Variant)
 
     'Declare function variables
     Dim i As Integer
@@ -654,8 +522,12 @@ Sub UpdateChanges(upd As Variant, strDb As String)
     For i = 0 To UBound(upd)
 
         'Execute update statement
-        cnn.Execute "UPDATE " & strDb " SET " & upd(i)
+        cnn.Execute "UPDATE " & strDb & " SET " & upd(i)
     Next
+
+    'Close recordset and free Objects
+    cnn.Close
+    Set cnn = Nothing
 End Sub
 
 
@@ -670,8 +542,12 @@ Sub DeleteRecords(strDel As String)
     cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
         & "DATABASE=Pricing_Agreements;"
 
-    cnn.Execute "DELETE FROM UL_Programs " _
+    cnn.Execute "DELETE FROM " & strDb & " " _
         & "WHERE PROGRAM_ID IN (" & strDel & ")"
+
+    'Close recordset and free Objects
+    cnn.Close
+    Set cnn = Nothing
 End Sub
 
 
@@ -680,18 +556,14 @@ End Sub
 'array of insert statements (one element per statement) and an array with the
 'corresponding excel row numbers.
 '*******************************************************************************
-Sub InsertNew(ins As Variant, insRow As Variant, strDb As String)
+Sub InsertNew(ins As Variant, insRow As Variant)
 
     'Declare function variables
     Dim i As Integer
-    Dim iPkey As Integer
-    Dim iCID As Integer
-    Dim iPID As Integer
 
-    'Get column (Excel) index for gutter columns
-    iPkey = 1
-    iCID = 2
-    iPID = 3
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
 
     'Loop through each insert statement in passthrough array
     For i = 0 To UBound(ins)
@@ -700,49 +572,23 @@ Sub InsertNew(ins As Variant, insRow As Variant, strDb As String)
         rst.Open "INSERT INTO " & strDb & " " _
             & "OUTPUT inserted.PRIMARY_KEY AS PKEY, " _
             & "inserted.CUSTOMER_ID AS CID, " _
+            & "inserted.PROGRAM_ID AS PID " _
             & "VALUES(" & ins(i) & ")", cnn
 
-        'Update Excel file with primary key & customer ID
+        'Update Excel file with primary key, customer ID & program ID
         Cells(insRow(i), iPkey).value = rst.Fields("PKEY").value
         Cells(insRow(i), iCID).value = rst.Fields("CID").value
+        Cells(insRow(i), iPID).value = rst.Fields("PID").value
 
         'Close recordset
         rst.Close
-
-        'Is focus sheet Programs tab and program ID field blank?
-        If strDb = "UL_Progrmas" And Cells(insRow(i), iPID).Value = "" Then _
-            Cells(insRow(i), iPID).Value = GetPID(Cells(insRow(i), iPKey).Value)
     Next
+
+    'Close recordset and free Objects
+    cnn.Close
+    Set cnn = Nothing
+    Set rst = Nothing
 End Sub
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 '*******************************************************************************
@@ -758,15 +604,15 @@ Sub Push()
     Set dbChanges = GetChanges
 
     'If updates were made to worksheet fields, push updates to server
-    If dbChanges.Exists("UPDATE") Then UpdateChanges(dbChanges("UPDATE"))
+    If dbChanges.Exists("UPDATE") Then UploadChanges(dbChanges("UPDATE"))
 
     'If updates were made to worksheet fields, push updates to server
     If dbChanges.Exists("DELETE") Then DeleteRecords(dbChanges("DELETE"))
 
     'If new lines were added to worksheet, push additionas to server
     If dbChanges.Exists("INSERT") Then InsertNew(dbChanges("INSERT"), _
-        dbChanges("INSERT"))
+        dbChanges("ROWS"))
 
     'Refresh static dictionary to save new worksheet data
-    Set Programs = GetSaveData(True)
+    Set dbChanges = GetSaveData(True)
 End Sub

@@ -268,7 +268,7 @@ Function AppendRow(var As Variant, iRow As Integer, _
     For iCol = iStart To UBound(var, 1)
 
         'Assemble SQL insert string
-        strVal = Validate(var(iCol, iRow), iCol, iRow, blType)
+        strVal = Validate(var(iCol, iRow), iCol, iRow)
 
         'Assemble array of insert rows
         strRow = Append(strRow, ",", strVal)
