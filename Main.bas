@@ -32,12 +32,12 @@ Sub Refresh_Data()
     Format.ShtRefresh("Deviation Loads"), Pull.GetDevLds)
 
     'Add drop down lists file and include data validation on Programs tab
-    Format.AddDropDwns(Pull.GetDropDwns, Pull.GetMyCst, Pull.GetOthCst)
+    Format.AddDropDwns
 
     'Save all sheet data set to static dictionary
-    Set Programs = Push_Maintenance.dctPrograms(True)
-    Set cstProfile = Push_Maintenance.dctCstProfile(True)
-    Set devLds = Push_Maintenance.dctDevLds(True)
+    Set Programs = oPrgms.GetSaveData(True)
+    Set cstProfile = oCst.GetSaveData(True)
+    Set devLds = oDev.GetSaveData(True)
 
     'Close connection
     cnn.Close

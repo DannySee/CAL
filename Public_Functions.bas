@@ -47,7 +47,7 @@ End Function
 '*******************************************************************************
 'Return multidimensional array of Excel sheet data.
 '*******************************************************************************
-Public Function GetXL(strSheet As String) As Variant
+Public Function GetXL(strSht As String) As Variant
 
     'Declare function variables
     Dim stCon as String
@@ -59,7 +59,7 @@ Public Function GetXL(strSheet As String) As Variant
         "Extended Properties=""Excel 12.0 Xml;HDR=YES"";"
 
     'Query file (from passthrough sheet) and return results in an open recordset
-    rst.Open "SELECT * FROM [" & strSheet & "$] ORDER BY PRIMARY_KEY", stCon
+    rst.Open "SELECT * FROM [" & strSht & "$] ORDER BY PRIMARY_KEY", stCon
 
     'Parse recordset into an multidimensional array
     If Not rst.EOF Then var = rst.GetRows()
@@ -72,4 +72,40 @@ Public Function GetXL(strSheet As String) As Variant
 
     'Return multidimensional array of Excel data (from passthrough sheet)
     GetXL = var
+End Function
+
+
+'*******************************************************************************
+'Returns updated dictionary of Excel data (Key = Primary_Key, Value = Array
+'of fields). Meant to update the passthrough dictionary with static dictionary.
+'*******************************************************************************
+Function RefreshDct(strSht As String) As Scripting.Dictionary
+
+    'Declare function variables
+    Dim dct As New Scripting.Dictionary
+    Dim arr As Variant
+    Dim var As Variant
+    Dim iRow As Integer
+    Dim iCol As Integer
+
+    'Save multidimensional array of program data
+    var = GetXL(strSht)
+
+    'Create an empty array with an index for each program field'
+    ReDim arr(UBound(var, 1))
+
+    'Loop through each row of program data
+    For iRow = 0 To UBound(var, 2)
+
+        'Loop through each column of program data & add element to array
+        For iCol = 0 To UBound(var, 1)
+            arr(iCol) = var(iCol, iRow)
+        Next
+
+        'Add line to dictionary with program ID as key & row fields as value
+        dct(var(0, iRow)) = arr
+    Next
+
+    'Return dictionary of program data
+    Set RefreshDct = dct
 End Function

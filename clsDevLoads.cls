@@ -11,9 +11,12 @@ Attribute VB_Exposed = False
 
 
 'Declare private class constants
-Private Const strSheet As String = "Deviation Loads"
+Private Const strSht As String = "Deviation Loads"
 Private Const strDb As String = "UL_Deviation_Loads"
+Private Const strDbx As String = "Deleted_Deviation_Loads"
 Private Const iPKey As Integer = 0
+Private Const iCID As Integer = 1
+Private Const iCst As Integer = 2
 
 'Declare private class variables
 Private dictCol As New Scripting.Dictionary
@@ -29,7 +32,7 @@ Private iCol As Integer
 Public Property Get Name() As String
 
     'Return class sheet name
-    Name = strSheet
+    Name = strSht
 End Property
 
 
@@ -97,40 +100,6 @@ End Sub
 
 
 '*******************************************************************************
-'Returns updated dictionary of Excel data (Key = Primary_Key, Value = Array
-'of fields). Meant to update the passthrough dictionary with static dictionary.
-'*******************************************************************************
-Function RefreshDct() As Scripting.Dictionary
-
-    'Declare function variables
-    Dim dct As New Scripting.Dictionary
-    Dim arr As Variant
-    Dim var As Variant
-
-    'Save multidimensional array of program data
-    var = GetXL(strSheet)
-
-    'Create an empty array with an index for each program field'
-    ReDim arr(UBound(var, 1))
-
-    'Loop through each row of program data
-    For iRow = 0 To UBound(var, 2)
-
-        'Loop through each column of program data & add element to array
-        For iCol = 0 To UBound(var, 1)
-            arr(iCol) = var(iCol, iRow)
-        Next
-
-        'Add line to dictionary with program ID as key & row fields as value
-        dct(var(iPKey, iRow)) = arr
-    Next
-
-    'Return dictionary of program data
-    Set RefreshDct = dct
-End Function
-
-
-'*******************************************************************************
 'Returns a static dictionary of Deviation Loads (Key = Primary Key, Value =
 'array of fields). Boolean parameter indicates if the dictionary needs to be
 'updated before it is returned.
@@ -141,7 +110,7 @@ Function GetSaveData(blUpdate As Boolean) As Scripting.Dictionary
     Static dct As New Scripting.Dictionary
 
     'Update dictionary before its returned (if indicated by passthrough boolean)
-    If blUpdate Then Set dct = RefreshDct
+    If blUpdate Then Set dct = RefreshDct(strSht)
 
     'Return static dictionary
     Set GetSaveData = dct
@@ -336,7 +305,7 @@ Function GetChanges() As Scripting.Dictionary
     Set old = GetSaveData(False)
 
     'Get new dictionary data (new data for comparison)
-    Set upd = GetXL(strSheet)
+    Set upd = GetXL(strSht)
 
     'Loop through rows of current program data
     For iRow = 0 To UBound(upd, 2)
@@ -375,3 +344,129 @@ Function GetChanges() As Scripting.Dictionary
     'Return dictionary with update/insert/delete SQL strings
     Set GetChanges = dbChanges
 End Function
+
+
+'*******************************************************************************
+'Executes SQL update statement to CAL database. Paramaters are an array of
+'update statements (one element per statement).
+'*******************************************************************************
+Sub UploadChanges(upd As Variant)
+
+    'Declare function variables
+    Dim i As Integer
+
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
+
+    'Loop through each update statement in passthrough array
+    For i = 0 To UBound(upd)
+
+        'Execute update statement
+        cnn.Execute "UPDATE " & strDb & " SET " & upd(i)
+    Next
+
+    'Close recordset and free Objects
+    cnn.Close
+    Set cnn = Nothing
+
+End Sub
+
+'*******************************************************************************
+'Execute SQL insert statement to CAL database. passthrough variables are an
+'array of insert statements (one element per statement) and an array with the
+'corresponding excel row numbers.
+'*******************************************************************************
+Sub DeleteRecords(strDel As String)
+
+    'Delcare sub variables
+    Dim strIns As String
+
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
+
+    rst.Open "DELETE FROM " & strDb & " " _
+        & "OUTPUT DELETED.* " _
+        & "WHERE PRIMARY_KEY IN (" & strDel & ")", cnn
+
+    'Get SQL insert string for archive tables & add network ID
+    strIns = GetIns(rst.GetRows(), 0) & ",'" & Environ("Username") & "'"
+
+    'Close recordset
+    rst.Close
+
+    'Insert deleted record into deleted table
+    cnn.Execute "INSERT INTO " & strDbx & " " _
+        & "VALUES(" & strIns & ")"
+
+    'Close recordset and free Objects
+    cnn.Close
+    Set cnn = Nothing
+    Set rst = Nothing
+End Sub
+
+
+'*******************************************************************************
+'Execute SQL insert statement to CAL database. passthrough variables are an
+'array of insert statements (one element per statement) and an array with the
+'corresponding excel row numbers.
+'*******************************************************************************
+Sub InsertNew(ins As Variant, insRow As Variant)
+
+    'Declare function variables
+    Dim i As Integer
+
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
+
+    'Loop through each insert statement in passthrough array
+    For i = 0 To UBound(ins)
+
+        'Execute insert statement & return primary key, customer and program ID
+        rst.Open "INSERT INTO " & strDb & " " _
+            & "OUTPUT inserted.PRIMARY_KEY AS PKEY, " _
+            & "inserted.CUSTOMER_ID AS CID, " _
+            & "VALUES(" & ins(i) & ")", cnn
+
+        'Update Excel file with primary key, customer ID & program ID
+        Cells(insRow(i), iPkey).value = rst.Fields("PKEY").value
+        Cells(insRow(i), iCID).value = rst.Fields("CID").value
+
+        'Close recordset
+        rst.Close
+    Next
+
+    'Close recordset and free Objects
+    cnn.Close
+    Set cnn = Nothing
+    Set rst = Nothing
+End Sub
+
+
+'*******************************************************************************
+'Upload/inserts new worksheet records to the SQL server. Refresh static
+'dictionary after upload is complete.
+'*******************************************************************************
+Sub Push()
+
+    'Declare sub variables
+    Dim dbChanges As New Scripting.Dictionary
+
+    'Retrieve workbook changes since last save
+    Set dbChanges = GetChanges
+
+    'If updates were made to worksheet fields, push updates to server
+    If dbChanges.Exists("UPDATE") Then UploadChanges(dbChanges("UPDATE"))
+
+    'If updates were made to worksheet fields, push updates to server
+    If dbChanges.Exists("DELETE") Then DeleteRecords(dbChanges("DELETE"))
+
+    'If new lines were added to worksheet, push additionas to server
+    If dbChanges.Exists("INSERT") Then InsertNew(dbChanges("INSERT"), _
+        dbChanges("ROWS"))
+
+    'Refresh static dictionary to save new worksheet data
+    Set dbChanges = GetSaveData(True)
+End Sub

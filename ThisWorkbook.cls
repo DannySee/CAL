@@ -16,5 +16,7 @@ Attribute VB_Exposed = False
 Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
 
     'Update/insert all new recordset
-    Push_Maintenance.Push
+    oPrgms.Push
+    oCst.Push
+    oDevLds.Push
 End Sub

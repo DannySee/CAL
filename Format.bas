@@ -155,14 +155,21 @@ End Sub
 
 '*******************************************************************************
 'Add drop down items to excel file to be referenced for dropdown formatting.
-'Parameters include array of dropdowns & assigned/unassigned customers.
 '*******************************************************************************
-Sub AddDropDwns(dropDwns As Variant, myCst as Variant, othCst As Variant)
+Sub AddDropDwns()
 
     'Declare sub variables
+    Dim dropDwns As Variant
+    Dim myCst As Variant
+    Dim othCst As Variant
     Dim iRow As Integer
     Dim iCol As Integer
     Dim i As Integer
+
+    'Get multidimensional arrays of drop down database
+    dropDwns = Pull.GetDropDwns
+    myCst = Pull.GetCstProfile
+    othCst = Pull.GetDevLds
 
     'Loop through columns in dropdown multidimensional array
     For iCol = 0 To UBound(dropDwns, 1)

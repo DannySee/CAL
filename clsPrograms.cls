@@ -11,8 +11,9 @@ Attribute VB_Exposed = False
 
 
 'Declare private class constants
-Private Const strSheet As String = "Programs"
+Private Const strSht As String = "Programs"
 Private Const strDb As String = "UL_Programs"
+Private Const strDbx As String = "Deleted_Programs"
 Private Const iPKey As Integer = 0
 Private Const iCID As Integer = 1
 Private Const iPID As Integer = 2
@@ -36,7 +37,7 @@ Private iRow As Integer
 Public Property Get Sht() As String
 
     'Return class sheet name
-    Sht = strSheet
+    Sht = strSht
 End Property
 
 
@@ -178,40 +179,6 @@ End Sub
 
 
 '*******************************************************************************
-'Returns updated dictionary of Excel data (Key = Primary_Key, Value = Array
-'of fields). Meant to update the passthrough dictionary with static dictionary.
-'*******************************************************************************
-Function RefreshDct() As Scripting.Dictionary
-
-    'Declare function variables
-    Dim dct As New Scripting.Dictionary
-    Dim arr As Variant
-    Dim var As Variant
-
-    'Save multidimensional array of program data
-    var = GetXL(strSheet)
-
-    'Create an empty array with an index for each program field'
-    ReDim arr(UBound(var, 1))
-
-    'Loop through each row of program data
-    For iRow = 0 To UBound(var, 2)
-
-        'Loop through each column of program data & add element to array
-        For iCol = 0 To UBound(var, 1)
-            arr(iCol) = var(iCol, iRow)
-        Next
-
-        'Add line to dictionary with program ID as key & row fields as value
-        dct(var(iPKey, iRow)) = arr
-    Next
-
-    'Return dictionary of program data
-    Set RefreshDct = dct
-End Function
-
-
-'*******************************************************************************
 'Returns a static dictionary of Program data (Key = Primary Key, Value = array
 'of fields). Boolean parameter indicates if the dictionary needs to be updated
 'before it is returned.
@@ -222,7 +189,7 @@ Function GetSaveData(blUpdate As Boolean) As Scripting.Dictionary
     Static dct As New Scripting.Dictionary
 
     'Update dictionary before its returned (if indicated by passthrough boolean)
-    If blUpdate Then Set dct = RefreshDct
+    If blUpdate Then Set dct = RefreshDct(strSht)
 
     'Return static dictionary
     Set GetSaveData = dct
@@ -442,7 +409,7 @@ Function GetChanges() As Scripting.Dictionary
     Set old = GetSaveData(False)
 
     'Get new dictionary data (new data for comparison)
-    Set upd = GetXL(strSheet)
+    Set upd = GetXL(strSht)
 
     'Loop through rows of current program data (will retrieve upd/ins strings)
     For iRow = 0 To UBound(upd, 2)
@@ -538,16 +505,31 @@ End Sub
 '*******************************************************************************
 Sub DeleteRecords(strDel As String)
 
+    'Declare sub variables
+    Dim strIns As String
+
     'Establish connection to SQL server
     cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
         & "DATABASE=Pricing_Agreements;"
 
-    cnn.Execute "DELETE FROM " & strDb & " " _
+    rst.Open "DELETE FROM " & strDb & " " _
+        & "OUTPUT DELETED.* " _
         & "WHERE PROGRAM_ID IN (" & strDel & ")"
+
+    'Get SQL insert string fro archive tables & add newtwork ID
+    strIns = GetIns(rst.GetRows(), 0) & ",'" & Environ("Username") & "'"
+
+    'Close recordset
+    rst.Close
+
+    'Insert deleted record into deleted table
+    cnn.Execute "INSERT INTO " & strDbx & " " _
+        & "VALUES(" & strIns & ")"
 
     'Close recordset and free Objects
     cnn.Close
     Set cnn = Nothing
+    Set rst = Nothing
 End Sub
 
 
