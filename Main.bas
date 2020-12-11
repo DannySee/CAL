@@ -4,12 +4,10 @@ Attribute VB_Name = "Main".
 'Declare public project variables
 Public cnn As New ADODB.Connection
 Public rst As New ADODB.Recordset
-Public Programs As New Scripting.Dictionary
-Public cstProfile As New Scripting.Dictionary
-Public devLds As New Scripting.Dictionary
 Public oPrgms As New clsPrograms
 Public oCst As new clsCustProfile
 Public oDev As New clsDevLoads
+Public oBtnPull As New clsPullCst
 Public netID As String
 
 
@@ -18,6 +16,9 @@ Public netID As String
 'format accordingly. Runs across main tabs.
 '*******************************************************************************
 Sub Refresh_Data()
+
+    'Declare sub variables
+    Dim tempDct As New Scripting.Dictionary
 
     'Set variable to current user Network ID
     netID = Environ("Username")
@@ -35,9 +36,9 @@ Sub Refresh_Data()
     Format.AddDropDwns
 
     'Save all sheet data set to static dictionary
-    Set Programs = oPrgms.GetSaveData(True)
-    Set cstProfile = oCst.GetSaveData(True)
-    Set devLds = oDev.GetSaveData(True)
+    Set tempDct = oPrgms.GetSaveData(True)
+    Set tempDct = oCst.GetSaveData(True)
+    Set tempDct = oDev.GetSaveData(True)
 
     'Close connection
     cnn.Close
@@ -45,4 +46,69 @@ Sub Refresh_Data()
     'Free Objects
     Set cnn = Nothing
     Set rst = Nothing
+End Sub
+
+
+Sub INITIALIZE_Pull_Unassigned_Customers
+
+    'Hide any visible shapes
+    Utility.Clear_Shapes
+
+    'Update listbox
+    Utility.Update_Listbox(False)
+
+    'Show utility elements
+    Utility.Show(oBtnPull.GetShapes)
+
+End Sub
+
+
+Sub SELECT_Pull_Unassigned_Customers
+
+End Sub
+
+
+
+Sub Download_CAL_By_Customer
+
+End Sub
+
+
+Sub Generate_Reminders
+
+End Sub
+
+
+Sub View_Active_Programs
+
+End Sub
+
+
+Sub DAB_Receipt_Validation
+
+End Sub
+
+
+Sub Reover_Deleted_Records
+
+End Sub
+
+
+Sub Pull_OpCo_List
+
+End Sub
+
+
+Sub Overlap_Validation
+
+End Sub
+
+
+Sub Item_Lookup
+
+End Sub
+
+
+Sub Request_Automation
+
 End Sub

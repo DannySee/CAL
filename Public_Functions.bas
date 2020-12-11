@@ -79,7 +79,7 @@ End Function
 'Returns updated dictionary of Excel data (Key = Primary_Key, Value = Array
 'of fields). Meant to update the passthrough dictionary with static dictionary.
 '*******************************************************************************
-Function RefreshDct(strSht As String) As Scripting.Dictionary
+Public Function RefreshDct(strSht As String) As Scripting.Dictionary
 
     'Declare function variables
     Dim dct As New Scripting.Dictionary

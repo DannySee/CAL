@@ -19,7 +19,6 @@ Function GetPrograms() As ADODB.Recordset
             & "SELECT CUSTOMER_ID " _
             & "FROM UL_Account_Ass " _
             & "WHERE T1_ID = '" & netID & "' " _
-            & "OR T2_ID = '" & netID & "')) " _
         & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
 
     'Return query results
@@ -40,7 +39,6 @@ Function GetCstProfile() As ADODB.Recordset
             & "SELECT CUSTOMER_ID " _
             & "FROM UL_Account_Ass " _
             & "WHERE T1_ID = '" & netID & "' " _
-            & "OR T2_ID = '" & netID & "') " _
         & "ORDER BY CUSTOMER", cnn
 
     'Return query results
@@ -61,7 +59,6 @@ Function GetDevLds() As ADODB.Recordset
             & "SELECT CUSTOMER_ID " _
             & "FROM UL_Account_Ass " _
             & "WHERE T1_ID = '" & netID & "' " _
-            & "OR T2_ID = '" & netID & "') " _
         & "ORDER BY CUSTOMER, PROGRAM", cnn
 
     'Return query results
@@ -105,7 +102,6 @@ Function GetMyCst() As Variant
     rst.Open "SELECT CUSTOMER_NAME " _
         & "FROM UL_ACCOUNT_ASS " _
         & "WHERE T1_ID = '" & netID & "' " _
-        & "OR T2_ID = '" & netID & "' " _
         & "ORDER BY CUSTOMER_NAME", cnn
 
     'Create array from query results
@@ -132,7 +128,6 @@ Function GetOthCst() As Variant
     rst.Open "SELECT CUSTOMER_NAME " _
         & "FROM UL_ACCOUNT_ASS " _
         & "WHERE T1_ID <> '" & netID & "' " _
-        & "AND T2_ID <> '" & netID & "' " _
         & "ORDER BY CUSTOMER_NAME", cnn
 
     'Create array from query results
