@@ -5,7 +5,7 @@ Attribute VB_Name = "Pull"
 'Query programs tab. Parameter is the user's network ID. Only pulls assigned
 'customers. Returns open recordset
 '*******************************************************************************
-Function GetPrograms() As ADODB.Recordset
+Function GetPrograms(strCst As String) As ADODB.Recordset
 
     'Query program data for assigned customers
     rst.Open "SELECT * " _
@@ -15,10 +15,7 @@ Function GetPrograms() As ADODB.Recordset
             & "FROM UL_Programs " _
             & "GROUP BY PROGRAM_ID) AS O " _
         & "ON PROGRAM_ID = O.PID AND END_DATE = O.ED " _
-        & "WHERE CUSTOMER_ID IN (" _
-            & "SELECT CUSTOMER_ID " _
-            & "FROM UL_Account_Ass " _
-            & "WHERE T1_ID = '" & netID & "' " _
+        & "WHERE CUSTOMER IN (" & strCst & ")"
         & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
 
     'Return query results
@@ -101,7 +98,7 @@ Function GetMyCst() As Variant
     'Query all assigned customer names
     rst.Open "SELECT CUSTOMER_NAME " _
         & "FROM UL_ACCOUNT_ASS " _
-        & "WHERE T1_ID = '" & netID & "' " _
+        & "WHERE CUSTOMER_NAME IN (" & strCst & ") "
         & "ORDER BY CUSTOMER_NAME", cnn
 
     'Create array from query results

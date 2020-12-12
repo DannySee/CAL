@@ -13,7 +13,7 @@ Attribute VB_Exposed = False
 '*******************************************************************************
 'On workbook Save/SaveAs call Push sub to insert/update all new records.
 '*******************************************************************************
-Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
+Sub OnSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
 
     'Update/insert all new recordset
     oPrgms.Push

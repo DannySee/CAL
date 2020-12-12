@@ -1,4 +1,4 @@
-Attribute VB_Name = "Main".
+Attribute VB_Name = "Refresh_Data".
 
 
 'Declare public project variables
@@ -12,16 +12,46 @@ Public netID As String
 
 
 '*******************************************************************************
-'Get fresh data directly from server. Delete old records, replace with new &
-'format accordingly. Runs across main tabs.
+'Get string of assigned customer names.
 '*******************************************************************************
-Sub Refresh_Data()
+Sub RefreshData()
 
     'Declare sub variables
-    Dim tempDct As New Scripting.Dictionary
+    Dim strCst As String
+    Dim i As Integer
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
 
     'Set variable to current user Network ID
     netID = Environ("Username")
+
+    'Query all customer assigned customer names
+    rst.Open "SELECT CUSTOMER_NAME " _
+        & "FROM UL_Account_Ass " _
+        & "WHERE T1_ID = '" & netID & "'", cnn
+
+    'Setup looping Integer
+    i=0
+
+    'Assemble customer string
+    Do While rst.EOF = False
+
+    Loop
+
+
+End Sub
+
+
+'*******************************************************************************
+'Get fresh data directly from server. Delete old records, replace with new &
+'format accordingly. Runs across main tabs.
+'*******************************************************************************
+Sub ShtRefresh()
+
+    'Declare sub variables
+    Dim tempDct As New Scripting.Dictionary
 
     'Establish connection to SQL server
     cnn.Open _
@@ -46,69 +76,4 @@ Sub Refresh_Data()
     'Free Objects
     Set cnn = Nothing
     Set rst = Nothing
-End Sub
-
-
-Sub INITIALIZE_Pull_Unassigned_Customers
-
-    'Hide any visible shapes
-    Utility.Clear_Shapes
-
-    'Update listbox
-    Utility.Update_Listbox(False)
-
-    'Show utility elements
-    Utility.Show(oBtnPull.GetShapes)
-
-End Sub
-
-
-Sub SELECT_Pull_Unassigned_Customers
-
-End Sub
-
-
-
-Sub Download_CAL_By_Customer
-
-End Sub
-
-
-Sub Generate_Reminders
-
-End Sub
-
-
-Sub View_Active_Programs
-
-End Sub
-
-
-Sub DAB_Receipt_Validation
-
-End Sub
-
-
-Sub Reover_Deleted_Records
-
-End Sub
-
-
-Sub Pull_OpCo_List
-
-End Sub
-
-
-Sub Overlap_Validation
-
-End Sub
-
-
-Sub Item_Lookup
-
-End Sub
-
-
-Sub Request_Automation
-
 End Sub

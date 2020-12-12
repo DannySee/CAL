@@ -4,7 +4,7 @@ Attribute VB_Name = "Format"
 '*******************************************************************************
 'Hide any shapes on Control Panel sheetthat are not constant UI elements.
 '*******************************************************************************
-Sub ClearShapes()
+Sub Clear_Shapes()
 
     'Loop through each shape in Control panel
     For Each shp In Sheets("Control Panel").Shapes
@@ -19,7 +19,7 @@ End Sub
 'Update multiuse listbox with list of customers. Boolean operator indicates
 'if listbox should conatain assigned customers or unassigned customers.
 '*******************************************************************************
-Sub UpdateListbox(blMyCst As Boolean)
+Sub Update_Listbox(blMyCst As Boolean)
 
     'Focus on dropdowns sheet
     With Sheets("DropDowns")
@@ -45,14 +45,14 @@ Sub UpdateListbox(blMyCst As Boolean)
     End With
 
     'Correct listbox sizing
-    ResizeListbox
+    Resize_Listbox
 End Sub
 
 
 '*******************************************************************************
 'Resize multiuse listbox to help accomodate different screen aspect ratios.
 '*******************************************************************************
-Sub ResizeListbox()
+Sub Resize_Listbox()
 
     'Focus on Control Panel Sheet
     With Sheets("Control Panel")
@@ -81,24 +81,3 @@ Sub Show(varShapes As Variant)
         Next
     End With
 End Sub
-
-
-Function GetSelection() As String
-
-    'Declare function variables
-    Dim strCst As String
-    Dim strVal As String
-
-    'Loop through all dropdowns to create string
-    With Sheets("Control Panel").Cust_Add_Listbox
-        For i = 0 To .ListCount - 1
-            If .Selected(i) Then
-                strVal = "'" & .List(i) & "'"
-                strCst = Append(strCst, ",", strCst)
-            End If
-        Next
-    End With
-
-    'Return string of customers
-    GetSelection = strCst
-End Function
