@@ -9,71 +9,53 @@ Public oCst As new clsCustProfile
 Public oDev As New clsDevLoads
 Public oBtnPull As New clsPullCst
 Public netID As String
-
-
-'*******************************************************************************
-'Get string of assigned customer names.
-'*******************************************************************************
-Sub RefreshData()
-
-    'Declare sub variables
-    Dim strCst As String
-    Dim i As Integer
-
-    'Establish connection to SQL server
-    cnn.Open _
-        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
-
-    'Set variable to current user Network ID
-    netID = Environ("Username")
-
-    'Query all customer assigned customer names
-    rst.Open "SELECT CUSTOMER_NAME " _
-        & "FROM UL_Account_Ass " _
-        & "WHERE T1_ID = '" & netID & "'", cnn
-
-    'Setup looping Integer
-    i=0
-
-    'Assemble customer string
-    Do While rst.EOF = False
-
-    Loop
-
-
-End Sub
+Public i As Integer
 
 
 '*******************************************************************************
 'Get fresh data directly from server. Delete old records, replace with new &
 'format accordingly. Runs across main tabs.
 '*******************************************************************************
-Sub ShtRefresh()
+Sub Refresh()
 
     'Declare sub variables
     Dim tempDct As New Scripting.Dictionary
+    Dim strCst As String
+
+    'Set variable to current user Network ID
+    netID = Environ("Username")
+
+    'Clear data from sheets
+    Format.ClearShts
 
     'Establish connection to SQL server
     cnn.Open _
         "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
 
-    'Format sheets and insert updated server data
-    Format.ShtRefresh("Programs", Pull.GetPrograms)
-    Format.ShtRefresh("Customer Profile"), Pull.GetCstProfile)
-    Format.ShtRefresh("Deviation Loads"), Pull.GetDevLds)
+    'Get String of my customer names
+    strCst = GetStr(Pull.GetCst(True), True)
 
-    'Add drop down lists file and include data validation on Programs tab
+    'Exit sub routine if user is not assigned to customers
+    If strCst = "" Then Goto NoCst
+
+    'Refresh drop
     Format.AddDropDwns
+
+    'Format sheets and insert updated server data
+    Format.ShtRefresh(oPrgms, Pull.GetPrograms(strCst))
+    Format.ShtRefresh(oCst, Pull.GetCstProfile(strCst))
+    Format.ShtRefresh(oDevLds, Pull.GetDevLds(strCst))
+
+    'Close connection & free connections
+    cnn.Close
+    Set cnn = Nothing
+    Set rst = Nothing
 
     'Save all sheet data set to static dictionary
     Set tempDct = oPrgms.GetSaveData(True)
     Set tempDct = oCst.GetSaveData(True)
     Set tempDct = oDev.GetSaveData(True)
 
-    'Close connection
-    cnn.Close
-
-    'Free Objects
-    Set cnn = Nothing
-    Set rst = Nothing
+'Jump to label to skip sub routine
+NoCst:
 End Sub

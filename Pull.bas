@@ -27,15 +27,12 @@ End Function
 'Query Customer Profile tab. Parameter is the user's network ID. Only pulls
 'assigned customers. Returns open recordset
 '*******************************************************************************
-Function GetCstProfile() As ADODB.Recordset
+Function GetCstProfile(strCst As String) As ADODB.Recordset
 
     'Query customer profile data for assigned customers
     rst.Open "SELECT DISTINCT * " _
         & "FROM UL_Customer_Profile " _
-        & "WHERE CUSTOMER_ID IN (" _
-            & "SELECT CUSTOMER_ID " _
-            & "FROM UL_Account_Ass " _
-            & "WHERE T1_ID = '" & netID & "' " _
+        & "WHERE CUSTOMER_NAME IN (" & strCst & ") " _
         & "ORDER BY CUSTOMER", cnn
 
     'Return query results
@@ -47,15 +44,12 @@ End Function
 'Query Deviation Loads tab. Parameter is the user's network ID. Only pulls
 'assigned customers. Returns open recordset
 '*******************************************************************************
-Function GetDevLds() As ADODB.Recordset
+Function GetDevLds(strCst As String) As ADODB.Recordset
 
     'Query deviation load data for assigned customers
     rst.Open "SELECT DISTINCT * " _
         & "FROM UL_Deviation_Loads " _
-        & "WHERE CUSTOMER_ID IN (" _
-            & "SELECT CUSTOMER_ID " _
-            & "FROM UL_Account_Ass " _
-            & "WHERE T1_ID = '" & netID & "' " _
+        & "WHERE CUSTOMER_NAME IN (" & strCst & ") " _
         & "ORDER BY CUSTOMER, PROGRAM", cnn
 
     'Return query results
@@ -87,52 +81,41 @@ End Function
 
 
 '*******************************************************************************
-'Query all assigned customer names. Parameter is user's network ID. Returns
+'Query all  customer names. Parameter is user's network ID. Returns
 'array of customer names
 '*******************************************************************************
-Function GetMyCst() As Variant
+Function GetCst(blMyCst As Boolean) As Variant
 
     'Declare function variables
     Dim var As Variant
+    Dim strVal As String
+    Dim strEq As String
+
+    'Set equal character
+    If blMyCst = False Then
+        strEq = "<>"
+    Else
+        strEq = "="
+    End If
 
     'Query all assigned customer names
-    rst.Open "SELECT CUSTOMER_NAME " _
+    rst.Open "SELECT CUSTOMER_NAME AS CST " _
         & "FROM UL_ACCOUNT_ASS " _
-        & "WHERE CUSTOMER_NAME IN (" & strCst & ") "
+        & "WHERE T1_ID " & strEq & " '" & netID & "' " _
         & "ORDER BY CUSTOMER_NAME", cnn
 
-    'Create array from query results
-    var = rst.GetRows()
+    'Assemble string from query results
+    Do While rst.EOF = False
+        strVal = Append(strVal & "," & rst.Fields("CST").Value)
+        rst.MoveNext
+    Loop
 
     'Close recordset
     rst.Close
+
+    'Split string into array (split by comma)
+    var = Split(strVal, ",")
 
     'Return Array of assigned customer names
     GetMyCst = var
-End Function
-
-
-'*******************************************************************************
-'Query all unassigned customer names. Parameter is user's network ID. Returns
-'array of customer names
-'*******************************************************************************
-Function GetOthCst() As Variant
-
-    'Declare function variables
-    Dim var As Variant
-
-    'Query all unassigned customer names
-    rst.Open "SELECT CUSTOMER_NAME " _
-        & "FROM UL_ACCOUNT_ASS " _
-        & "WHERE T1_ID <> '" & netID & "' " _
-        & "ORDER BY CUSTOMER_NAME", cnn
-
-    'Create array from query results
-    var = rst.GetRows()
-
-    'Close recordset
-    rst.Close
-
-    'Return array of unassigned customer names
-    GetOthCst = var
 End Function

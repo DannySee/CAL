@@ -130,6 +130,47 @@ End Function
 
 
 '*******************************************************************************
+'Add data validaiton to sheet. Include appropriate drop down list for all
+'restricted fields.
+'*******************************************************************************
+Sub AddDataValidation()
+
+    'Declare sub variables
+    Dim rngCst As Range
+    Dim rngDrp As Range
+    Dim iLRow As Integer
+    Dim iDropLR As Integer
+
+    'Activate programs tab
+    With Sheets(strSht)
+
+        'Remove data validation from sheet
+        .Cells.Validation.Delete
+
+        'Find last row
+        iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
+
+        'save range to add DropDowns
+        Set rngCst = .Range(.Cells(2, iCst + 1), .Cells(iLRow, iCst + 1))
+    End With
+
+    'Activate DropDowns tab
+    With Sheets("DropDowns")
+
+        'Get last row of dropdown fields
+        iDropLR = .Cells(.Rows.Count, "H").End(xlUp).Row + 1
+
+        'Save dropdown Range
+        Set rngDrp = .Range(.Cells(1, "I"), .Cells(iDropLR, "I")
+
+        'Add data validation to Excel (Programs) range
+        rngCst.Validation.Add xlValidateList, _
+            Formula1:="=DropDowns!" & rngDrp.Address
+    End With
+End Sub
+
+
+'*******************************************************************************
 'Return value which has been validated for its SQL field datatype. This Function
 'is meant to assist in assembling SQL update/insert strings to the UL_Programs
 'database. Passthrough variables are the string value to be validated and its

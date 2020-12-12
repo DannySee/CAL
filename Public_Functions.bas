@@ -23,7 +23,8 @@ End Function
 'Returns a concatenated string in SQL syntax. Parameters are a multidimensional
 'array with Excel data, the row index to be parsed.
 '*******************************************************************************
-Public Function AppendRow(var As Variant, iRow As Integer, iStrt As Integer) As String
+Public Function AppendRow(var As Variant, iRow As Integer, iStrt As Integer) _
+    As String
 
     'Declare function variables
     Dim strVal As String
@@ -108,4 +109,33 @@ Public Function RefreshDct(strSht As String) As Scripting.Dictionary
 
     'Return dictionary of program data
     Set RefreshDct = dct
+End Function
+
+
+'*******************************************************************************
+'Get comma delimited string from array. blStr indicates if string should also be
+'quote delimited.
+'*******************************************************************************
+Public Function GetStr(upd As Variant, blStr) As String
+
+    'Declare function variables
+    Dim i As Integer
+    Dim strVal As String
+    Dim sep As String
+
+    'Get comma delimiter if string
+    If blStr = True Then sep = "'"
+
+    'Setup looping variable
+    i = 0
+
+    'Loop through recordset
+    For i = 0 To Ubound(var)
+
+        'Assemble string of customer names
+        strVal = Append(strVal, ",", sep & var(i) & sep)
+    Next
+
+    'Return string of customer names
+    GetStr = strVal
 End Function

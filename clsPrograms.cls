@@ -18,10 +18,18 @@ Private Const iPKey As Integer = 0
 Private Const iCID As Integer = 1
 Private Const iPID As Integer = 2
 Private Const iDAB As Integer = 3
+Private Const iTime As Integer = 5
+Private Const iTier As Integer = 6
 Private Const iCst As Integer = 7
 Private Const iSDte As Integer = 9
 Private Const iEDte As Integer = 10
+Private Const VAType As Integer = 13
 Private Const iVend As Integer = 14
+Private Const iBB As Integer = 15
+Private Const iCost As Integer = 16
+Private Const iCAType As Integer = 17
+Private Const iRebate As Integer = 18
+Private Const iApprop As Integer = 20
 
 'Declare private class variables
 Private dictCol As New Scripting.Dictionary
@@ -194,6 +202,67 @@ Function GetSaveData(blUpdate As Boolean) As Scripting.Dictionary
     'Return static dictionary
     Set GetSaveData = dct
 End Function
+
+
+'*******************************************************************************
+'Add data validaiton to sheet. Include appropriate drop down list for all
+'restricted fields. BB Format will always include a blank list (field is
+'deactivated).
+'*******************************************************************************
+Sub AddDataValidation()
+
+    'Declare sub variables
+    Dim rngYN As Range
+    Dim rngDrp As Range
+    Dim varRng As Variant
+    Dim iLRow As Long
+    Dim iDropLR As Integer
+
+    'Activate programs tab
+    With Sheets(strSht)
+
+        'Remove data validation from sheet
+        .Cells.Validation.Delete
+
+        'Find last row
+        iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row
+
+        'Set range for fields which will have Y/N drop down
+        Set rngYN = .Range(.Cells(2, iDAB + 1), .Cells(iLRow, iTime + 1))
+
+        'Create an array of pertinant Excel (Programs) ranges
+        varRng = Array( _
+            .Range(.Cells(2, iTier), .Cells(iLRow, iTier)), _
+            .Range(.Cells(2, iVAType), .Cells(iLRow, iVAType)), _
+            .Range(.Cells(2, iCost), .Cells(iLRow, iCost)), _
+            .Range(.Cells(2, iBB), .Cells(iLRow, iBB)), _
+            .Range(.Cells(2, iCAType), .Cells(iLRow, iCAType)), _
+            .Range(.Cells(2, iRebate), .Cells(iLRow, iRebate)), _
+            .Range(.Cells(2, iApprop), .Cells(iLRow, iApprop)), _
+            .Range(.Cells(2, iCst), .Cells(iLRow, iCst)))
+    End With
+
+    'Add Y/N drop down list to first three editable Fields
+    rngYN.Validation.Add xlValidateList, Formula1:="Y,N"
+
+    'Activate DropDowns tab
+    With Sheets("DropDowns")
+
+        'Loop through each column of DropDowns tab
+        For i = 0 To UBound(varRng)
+
+            'Get last row of dropdown fields
+            iDropLR = .Cells(.Rows.Count, i + 1).End(xlUp).Row
+
+            'Save dropdown Range
+            Set rngDrp = .Range(.Cells(1, i + 1), .Cells(iDropLR, i + 1))
+
+            'Add data validation to Excel (Programs) range
+            varRng(i).Validation.Add xlValidateList, _
+                Formula1:="=DropDowns!" & rngDrp.Address
+        Next
+    End With
+End Sub
 
 
 '*******************************************************************************
@@ -478,9 +547,6 @@ End Function
 '*******************************************************************************
 Sub UploadChanges(upd As Variant)
 
-    'Declare function variables
-    Dim i As Integer
-
     'Establish connection to SQL server
     cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
         & "DATABASE=Pricing_Agreements;"
@@ -539,9 +605,6 @@ End Sub
 'corresponding excel row numbers.
 '*******************************************************************************
 Sub InsertNew(ins As Variant, insRow As Variant)
-
-    'Declare function variables
-    Dim i As Integer
 
     'Establish connection to SQL server
     cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _

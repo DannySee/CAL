@@ -83,22 +83,21 @@ Sub Show(varShapes As Variant)
 End Sub
 
 
-Function GetSelection() As String
+'*******************************************************************************
+'Return string of user selections (wrapped in quotes).
+'*******************************************************************************
+Function GetSelection() As Variant
 
     'Declare function variables
     Dim strCst As String
-    Dim strVal As String
 
     'Loop through all dropdowns to create string
     With Sheets("Control Panel").Cust_Add_Listbox
         For i = 0 To .ListCount - 1
-            If .Selected(i) Then
-                strVal = "'" & .List(i) & "'"
-                strCst = Append(strCst, ",", strCst)
-            End If
+            If .Selected(i) Then strCst = Append(strCst, ",", .List(i))
         Next
     End With
 
     'Return string of customers
-    GetSelection = strCst
+    If strCst <> "" Then GetSelection = Split(strCst, ",")
 End Function

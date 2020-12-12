@@ -38,28 +38,58 @@ End Sub
 
 
 '*******************************************************************************
+'Clear data from 3 data pages (Programs, Customer Profile & Deviation Loads).
+'*******************************************************************************
+Sub ClearShts()
+
+    'Declare variables
+    Dim varSht As Variant
+
+    'Setup array of all Sheets
+    varSht = Array("Programs","Customer Profile","Deviation Loads")
+
+    'Loop through Sheets
+    For Each sht In varSht
+
+        'Unlock sheets
+        shtUnlock(sht)
+
+        'Focus on sheet and clear all data
+        With Sheets(sht)
+            .Rows(1).AutoFilter
+            iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row
+            .Range("A2:A" & iLRow + 1).EntireRow.Delete
+            .Rows(1).AutoFilter
+        End With
+
+        'Lock sheets
+        shtLock(sht)
+    Next
+End Sub
+
+
+'*******************************************************************************
 'Delete old sheet detail and paste new. Parameters are sheet name and open
 'recordset.
 '*******************************************************************************
-Sub ShtRefresh(strSht As String, upd As ADODB.Recordset)
+Sub ShtRefresh(obj As Object, upd As ADODB.Recordset)
 
     'Unlock sheet
-    ShtUnlock(strSht)
+    ShtUnlock(obj.Sht)
 
     'Clear previous sheet content and paste new
-    With Sheets(strSht)
+    With Sheets(obj.Sht)
         .Rows(1).AutoFilter
-        iLRow = .Range("A" & .Rows.Count).End(xlUp)
-        .Range("A2:A" & iLRow + 1).EntireRow.Delete
-        .Range("A2").CopyFromRecordset upd
+        iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
+        .Cells(iLRow, 1).CopyFromRecordset upd
         .Rows(1).AutoFilter
     End With
 
     'Format sheet
-    AddFormat(strSht)
+    AddFormat(obj)
 
     'Lock sheet
-    ShtLock(strSht)
+    ShtLock(obj.Sht)
 
     'Close recordset
     upd.Close
@@ -70,10 +100,10 @@ End Sub
 'Format CAL sheet. Resize rows, correct borders, lock white space etc.
 'Parameter is the sheet to be formatted.
 '*******************************************************************************
-Sub AddFormat(strSht As String)
+Sub AddFormat(obj As Object)
 
     'Activate sheet
-    With Sheets(strSht)
+    With Sheets(obj.Sht)
 
         'Get last row and last COLUMN_NUM
         iLRow = .Cells(.Rows.Count,1).End(xlUp).Row
@@ -104,8 +134,11 @@ Sub AddFormat(strSht As String)
             .Cells(.Rows.Count, 1)).EntireRow.Locked = True
     End With
 
+    'Add data validation (drop down options)
+    obj.AddDataValidation
+
     'If active sheet is Programs tab then add end date condition formatting
-    If strSht = "Programs" Then AddCondFormatting
+    If obj.Sht = "Programs" Then AddCondFormatting
 End Sub
 
 
@@ -117,7 +150,6 @@ Sub AddCondFormatting()
 
     'Declare sub variables
     Dim rngFrmt As Range
-    Dim iLRow As Long
     Dim iStrt As Integer
     Dim iEnd As Integer
     Dim strDteRng As String
@@ -164,12 +196,14 @@ Sub AddDropDwns()
     Dim othCst As Variant
     Dim iRow As Integer
     Dim iCol As Integer
-    Dim i As Integer
 
     'Get multidimensional arrays of drop down database
     dropDwns = Pull.GetDropDwns
-    myCst = Pull.GetCstProfile
-    othCst = Pull.GetDevLds
+    myCst = Pull.GetCst(True)
+    othCst = Pull.GetCst(False)
+
+    'Clear old Dropdown values
+    Sheets("DropDowns").Cells.Value = ""
 
     'Loop through columns in dropdown multidimensional array
     For iCol = 0 To UBound(dropDwns, 1)
@@ -196,89 +230,28 @@ Sub AddDropDwns()
         'Paste unassigned customers in list format
         Sheets("DropDowns").Cells(i+1, 9).Value = othCst(i)
     Next
-
-    'Add data validation to programs tab (create drop down lists)
-    AddDataValidation
 End Sub
 
 
 '*******************************************************************************
-'Add data validaiton to Programs tab. Include appropriate drop down list for
-'all restricted fields. BB Format will always include a blank list (field is
-'deactivated).
+'Update assigned/unassigned customer dropdown options
 '*******************************************************************************
-Sub AddDataValidation()
+Sub ReviseDropDwns(varCst As Variant)
 
-    'Declare sub variables
-    Dim rngYN As Range
-    Dim rngDrp As Range
-    Dim rngPrgm As Range
-    Dim varPrgmRng As Variant
-    Dim iLRow As Long
-    Dim iDropLR As Integer
-    Dim iTier As Integer
-    Dim iVAType As Integer
-    Dim iCost As Integer
-    Dim iBB As Integer
-    Dim iCAType As Integer
-    Dim iRebate As Integer
-    Dim iApprop As Integer
-    Dim iCst As Integer
-    Dim i As Integer
-
-    'Get indeces for pertinant Excel (Programs) indeces
-    iTier = oPrgms.ColIndex("TIER") + 1, _
-    iVAType = oPrgms.ColIndex("VEND_AGMT_TYPE") + 1, _
-    iCost = oPrgms.ColIndex("COST_BASIS") + 1, _
-    iBB = oPrgms.ColINdex("BILLBACK_FORMAT") + 1 _
-    iCAType = oPrgms.ColIndex("CUST_AGMT_TYPE") + 1, _
-    iRebate = oPrgms.ColIndex("REBATE_BASIS") + 1, _
-    iApprop = oPrgms.ColIndex("APPROP_NAME") + 1 _
-    iCst = oPrgms.ColIndex("CUSTOMER") + 1)
-
-    'Activate programs tab
-    With Sheets("Programs")
-
-        'Remove data validation from sheet
-        .Cells.Validation.Delete
-
-        'Find last row
-        iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row
-
-        'Set range for fields which will have Y/N drop down
-        Set rngYN = .Range(.Cells(2, oPrgms.ColIndex("DAB")), _
-            .Cells(iLRow, oPrgms.ColIndex("TIMELINESS")))
-
-        'Create an array of pertinant Excel (Programs) ranges
-        varPrgmRng = Array( _
-            .Range(.Cells(2, iTier), .Cells(iLRow, iTier)), _
-            .Range(.Cells(2, iVAType), .Cells(iLRow, iVAType)), _
-            .Range(.Cells(2, iCost), .Cells(iLRow, iCost)), _
-            .Range(.Cells(2, iBB), .Cells(iLRow, iBB)), _
-            .Range(.Cells(2, iCAType), .Cells(iLRow, iCAType)), _
-            .Range(.Cells(2, iRebate), .Cells(iLRow, iRebate)), _
-            .Range(.Cells(2, iApprop), .Cells(iLRow, iApprop)), _
-            .Range(.Cells(2, iCst), .Cells(iLRow, iCst)))
-    End With
-
-    'Add Y/N drop down list to first three editable Fields
-    rngYN.Validation.Add xlValidateList, Formula1:="Y,N"
-
-    'Activate DropDowns tab
+    'Focus on DropDowns sheet
     With Sheets("DropDowns")
 
-        'Loop through each column of DropDowns tab
-        For i = 0 To UBound(varPrgmRng)
+        'Loop through all customers in passthrough array
+        For i = 0 To Ubound(varCst)
 
-            'Get last row of dropdown fields
-            iDropLR = .Cells(.Rows.Count, i + 1).End(xlUp).Row
+            'Find last row
+            iLRow = .Cells(.Rows.Count,1).End(xlUp).Row + 1
 
-            'Save dropdown Range
-            Set rngDrp = .Range(.Cells(1, i + 1), .Cells(iDropLR, i + 1))
+            'Add customers to assigned customer list
+            .Cells(iLRow, "H").Value = varCst(i)
 
-            'Add data validation to Excel (Programs) range
-            varPrgmRng(i).Validation.Add xlValidateList, _
-                Formula1:="=DropDowns!" & rngDrp.Address
+            'Remove customer from unassigned customer list
+            .Cells(.Columns("I").Find(varCst(i)).Row, "I")).Delete
         Next
-    End With
+    End WIth
 End Sub
