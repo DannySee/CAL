@@ -101,3 +101,28 @@ Function GetSelection() As Variant
     'Return string of customers
     If strCst <> "" Then GetSelection = Split(strCst, ",")
 End Function
+
+
+'******************************************************************************
+'Prompt user to select a folder, create new folder, return folder path.
+'******************************************************************************
+Function SelectFolder() As String
+
+    'Declare function variables
+    Dim FldrPicker As FileDialog
+    Dim strPth As String
+
+    'Prompt user to select a folder path
+    With FldrPicker
+        .Title = "Select Folder Location"
+        .AllowMultiSelect = False
+        If .Show = -1 Then strPth = _
+            .SelectedItems(1) & "\CAL by Customer " & Format(Now(), mm.dd.yy))
+    End With
+
+    'Create folders for Update letters to be saved to
+    MkDir(strPth)
+
+    'Return selected folder path
+    SelectFolder = strPath
+End Function
