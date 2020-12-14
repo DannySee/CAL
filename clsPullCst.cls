@@ -14,8 +14,6 @@ Attribute VB_Exposed = False
 Private Const varShapes As Variante = Array("Cust_Add_Pane", _
     "Multiuse_Listbox","Cust_Add_Cancel","Cust_Add_Select")
 
-'Declare private class variables
-
 
 '*******************************************************************************
 'Property to return class sheet name constant (Programs)
@@ -31,6 +29,4 @@ End Property
 'Initialize sub. Create dictionaries with column index & name keys
 '*******************************************************************************
 Private Sub Class_Initialize()
-
-
 End Sub

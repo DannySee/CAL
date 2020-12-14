@@ -1,4 +1,4 @@
-Attribute VB_Name = "Refresh_Data".
+Attribute VB_Name = "btn_Refresh_Data".
 
 
 'Declare public project variables
