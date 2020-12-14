@@ -1,5 +1,15 @@
 Attribute VB_Name = "Custom_Functions"
 
+'Declare public project variables
+Public cnn As New ADODB.Connection
+Public rst As New ADODB.Recordset
+Public oPrgms As New clsPrograms
+Public oCst As new clsCustProfile
+Public oDev As New clsDevLoads
+Public oBtnPull As New clsPullCst
+Public netID As String
+Public i As Integer
+
 
 '*******************************************************************************
 'Returns a concatenated string with separator.

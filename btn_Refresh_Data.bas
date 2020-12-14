@@ -1,22 +1,11 @@
 Attribute VB_Name = "btn_Refresh_Data".
 
 
-'Declare public project variables
-Public cnn As New ADODB.Connection
-Public rst As New ADODB.Recordset
-Public oPrgms As New clsPrograms
-Public oCst As new clsCustProfile
-Public oDev As New clsDevLoads
-Public oBtnPull As New clsPullCst
-Public netID As String
-Public i As Integer
-
-
 '*******************************************************************************
 'Get fresh data directly from server. Delete old records, replace with new &
 'format accordingly. Runs across main tabs.
 '*******************************************************************************
-Sub Refresh()
+Sub Initialize()
 
     'Declare sub variables
     Dim tempDct As New Scripting.Dictionary
