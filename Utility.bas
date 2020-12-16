@@ -126,3 +126,19 @@ Function SelectFolder() As String
     'Return selected folder path
     SelectFolder = strPath
 End Function
+
+
+'******************************************************************************
+'Create new workbook and return object.
+'******************************************************************************
+Function CreateWorkbook(strName As String) As Workbook
+
+    'Create new workbook
+    Workbooks.Add
+
+    'Rename active sheet of new workbook
+    ActiveSheet.Name = strName
+
+    'Return workbook name
+    Set CreateWorkbook = ActiveWorkbook
+End Function
