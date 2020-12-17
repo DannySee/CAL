@@ -7,6 +7,7 @@ Public oPrgms As New clsPrograms
 Public oCst As new clsCustProfile
 Public oDev As New clsDevLoads
 Public oBtnPull As New clsPullCst
+Public oBtnDwn As New clsDonwloadCAL
 Public netID As String
 Public i As Integer
 

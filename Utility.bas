@@ -103,9 +103,9 @@ Function GetSelection() As Variant
 End Function
 
 
-'******************************************************************************
+'*******************************************************************************
 'Prompt user to select a folder, create new folder, return folder path.
-'******************************************************************************
+'*******************************************************************************
 Function SelectFolder() As String
 
     'Declare function variables
@@ -128,13 +128,16 @@ Function SelectFolder() As String
 End Function
 
 
-'******************************************************************************
-'Create new workbook and return object.
-'******************************************************************************
+'*******************************************************************************
+'Create new workbook with white formatting and return object.
+'*******************************************************************************
 Function CreateWorkbook(strName As String) As Workbook
 
     'Create new workbook
     Workbooks.Add
+
+    'Add blank formatting to workbook
+    Cells.Interior.Color = vbWhite
 
     'Rename active sheet of new workbook
     ActiveSheet.Name = strName
@@ -142,3 +145,25 @@ Function CreateWorkbook(strName As String) As Workbook
     'Return workbook name
     Set CreateWorkbook = ActiveWorkbook
 End Function
+
+
+'*******************************************************************************
+'Add headers to active workbook with formatting.
+'*******************************************************************************
+Sub AddHeaders(VarHeaders As variant) As Workbook
+
+    'Declare sub variables
+    Dim i As Integer
+
+    'Loop through all elements in passthrough array
+    For i = 0 To UBound(varHeaders)
+
+        'Add value and formatting to cell
+        With Cells(1,i + 1)
+            .Value = varHeaders(i)
+            .Interior.Color = RBG(255,255,255)
+            .Font.Color = vbWhite
+            .Font.Bold = True
+        End With
+    Next
+End Sub

@@ -1,6 +1,5 @@
 Attribute VB_Name = "Format"
 
-
 'Declare private module constants
 Private Const shtPWD As String = "Dac123am"
 Private Const shtProperties As String = _
@@ -56,10 +55,9 @@ Sub ClearShts()
 
         'Focus on sheet and clear all data
         With Sheets(sht)
-            .Rows(1).AutoFilter
+            .ShowAll
             iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row
             .Range("A2:A" & iLRow + 1).EntireRow.Delete
-            .Rows(1).AutoFilter
         End With
 
         'Lock sheets
@@ -79,10 +77,9 @@ Sub ShtRefresh(obj As Object, upd As ADODB.Recordset)
 
     'Clear previous sheet content and paste new
     With Sheets(obj.Sht)
-        .Rows(1).AutoFilter
+        .ShowAll
         iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
         .Cells(iLRow, 1).CopyFromRecordset upd
-        .Rows(1).AutoFilter
     End With
 
     'Format sheet

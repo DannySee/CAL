@@ -9,19 +9,20 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
-
 'Declare private class constants
-Private Const varShapes As Variant = Array("Cust_Add_Pane", _
-    "Multiuse_Listbox","Cust_Add_Cancel","Cust_Add_Select")
+Private Const varHeaders As Variant = Array("PROGRAM DESCRIPTION", _
+    "START DATE","END DATE","LEAD VA","LEAD CA","VA TYPE","VENDOR", _
+    "BB FORMAT","COST BASIS","CA TYPE","REBATE BASIS","PRE APPROVAL", _
+    "APPROP NAME","PRN/GRP","PACKET","PACKET DL","COMMENTS","","","","","")
 
 
 '*******************************************************************************
 'Property to return class sheet name constant (Programs)
 '*******************************************************************************
-Public Property Get Shapes() As String
+Public Property Get Headers() As String
 
     'Return class sheet name
-    Shapes = varShapes
+    Headers = varHeaders
 End Property
 
 
