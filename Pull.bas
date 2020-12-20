@@ -5,10 +5,14 @@ Attribute VB_Name = "Pull"
 'Query programs tab. Parameter is the user's network ID. Only pulls assigned
 'customers. Returns open recordset
 '*******************************************************************************
-Function GetPrograms(strCst As String) As ADODB.Recordset
+Function GetPrograms(strCst As String, strFlds As String) As ADODB.Recordset
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
 
     'Query program data for assigned customers
-    rst.Open "SELECT * " _
+    rst.Open "SELECT " & strFlds & " " _
         & "FROM UL_Programs " _
         & "INNER JOIN (" _
             & "SELECT MAX(END_DATE) AS ED, PROGRAM_ID AS PID " _
@@ -20,6 +24,9 @@ Function GetPrograms(strCst As String) As ADODB.Recordset
 
     'Return query results
     GetPrograms = rst
+
+    'Close connection/recordset and free free objects
+    FreeObjects
 End Function
 
 
@@ -29,6 +36,10 @@ End Function
 '*******************************************************************************
 Function GetCstProfile(strCst As String) As ADODB.Recordset
 
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
     'Query customer profile data for assigned customers
     rst.Open "SELECT DISTINCT * " _
         & "FROM UL_Customer_Profile " _
@@ -37,6 +48,9 @@ Function GetCstProfile(strCst As String) As ADODB.Recordset
 
     'Return query results
     GetCustProfile = rst
+
+    'Close connection/recordset and free free objects
+    FreeObjects
 End Function
 
 
@@ -46,6 +60,10 @@ End Function
 '*******************************************************************************
 Function GetDevLds(strCst As String) As ADODB.Recordset
 
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
     'Query deviation load data for assigned customers
     rst.Open "SELECT DISTINCT * " _
         & "FROM UL_Deviation_Loads " _
@@ -54,6 +72,9 @@ Function GetDevLds(strCst As String) As ADODB.Recordset
 
     'Return query results
     GetCustProfile = rst
+
+    'Close connection/recordset and free free objects
+    FreeObjects
 End Function
 
 
@@ -64,6 +85,10 @@ Function GetDropDwns() As Variant
 
     'Declare function variables
     Dim var As Variant
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
 
     'Query drop down option list
     rst.Open "SELECT DROP_DOWN " _
@@ -77,6 +102,9 @@ Function GetDropDwns() As Variant
 
     'Return multidimensional array of drop down list data
     GetDropDowns = var
+
+    'Close connection/recordset and free free objects
+    FreeObjects
 End Function
 
 
@@ -98,6 +126,9 @@ Function GetCst(blMyCst As Boolean) As Variant
         strEq = "="
     End If
 
+    'Set variable to current user Network ID
+    netID = Environ("Username")
+
     'Query all assigned customer names
     rst.Open "SELECT CUSTOMER_NAME AS CST " _
         & "FROM UL_ACCOUNT_ASS " _
@@ -118,4 +149,20 @@ Function GetCst(blMyCst As Boolean) As Variant
 
     'Return Array of assigned customer names
     GetMyCst = var
+
+    'Close connection/recordset and free free objects
+    FreeObjects
 End Function
+
+
+'*******************************************************************************
+'close and free ADODB objects
+'*******************************************************************************
+Sub FreeObjects()
+
+    'Close connection/recordset and free objects
+    rst.Close
+    cnn.Close
+    Set rst = Nothing
+    Set cnn = Nothing
+End Sub

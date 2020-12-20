@@ -1,4 +1,4 @@
-Attribute VB_Name = "Format"
+Attribute VB_Name = "Utility"
 
 
 '*******************************************************************************
@@ -27,7 +27,7 @@ Sub UpdateListbox(blMyCst As Boolean)
         'If listbox should be populated with assigned customers
         If blMyCst = True Then
 
-            'Find last row of Dropowns sheet
+            'Find last row of Dropowns sheet (custom column)
             iLRow = Cells(.Rows.Count, "H").End(xlUp).Row + 1
 
             'Update customer list be just unassigned customers
@@ -36,7 +36,7 @@ Sub UpdateListbox(blMyCst As Boolean)
         'If listbox should be populated with unassigned customers
         Else
 
-            'Find last row of Dropowns sheet
+            'Find last row of Dropowns sheet (custom column)
             iLRow = Cells(.Rows.Count, "I").End(xlUp).Row + 1
 
             'Update customer list be just unassigned customers
@@ -124,14 +124,14 @@ Function SelectFolder() As String
     MkDir(strPth)
 
     'Return selected folder path
-    SelectFolder = strPath
+    SelectFolder = strPth & "\"
 End Function
 
 
 '*******************************************************************************
-'Create new workbook with white formatting and return object.
+'Create new workbook with white formatting.
 '*******************************************************************************
-Function CreateWorkbook(strName As String) As Workbook
+Sub CreateWorkbook(strName As String)
 
     'Create new workbook
     Workbooks.Add
@@ -141,16 +141,13 @@ Function CreateWorkbook(strName As String) As Workbook
 
     'Rename active sheet of new workbook
     ActiveSheet.Name = strName
-
-    'Return workbook name
-    Set CreateWorkbook = ActiveWorkbook
 End Function
 
 
 '*******************************************************************************
 'Add headers to active workbook with formatting.
 '*******************************************************************************
-Sub AddHeaders(VarHeaders As variant) As Workbook
+Sub AddHeaders(varHeaders As Variant)
 
     'Declare sub variables
     Dim i As Integer
@@ -167,3 +164,45 @@ Sub AddHeaders(VarHeaders As variant) As Workbook
         End With
     Next
 End Sub
+
+
+'*******************************************************************************
+'Add borders to any range, assuming data starts in cell A1 and contains headers
+'*******************************************************************************
+Sub AddBorders()
+
+    'Get last row and last column
+    iLRow = LastRow(ActiveSheet.Name)
+    iLCol = LastRow(ActiveSheet.Name)
+
+    'Set borders to data range
+    Range(Cells(iLRow,1), Cells(1,iLCol)).Borders.Linestyle = xlContinuous
+End Sub
+
+
+'*******************************************************************************
+'Download customer friendly CAL to folder
+'*******************************************************************************
+Function DwnCstCAL(strCst As String) As Workbook
+
+    'Declare function variables
+    Dim strCst As String
+
+    'Create new Workbook w/ formatting
+    CreateWorkbook(strCst)
+
+    'Add headers to Workbook
+    AddHeaders(oPrgms.CstHeaders)
+
+    'Setup customer string with quote delimiters
+    strCst = "'" & cst & "'"
+
+    'Query customer records and paste to sheet
+    Cells(2,1).CopyFromRecordset Pull.GetPrograms(strCst, oPrgms.CstFlds)
+
+    'Add borders to Workbook
+    AddBorders
+
+    'Return Workbook
+    Set DwnCstCAL = ActiveWorkbook
+End Function

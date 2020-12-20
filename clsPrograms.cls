@@ -9,7 +9,6 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
-
 'Declare private class constants
 Private Const strSht As String = "Programs"
 Private Const strDb As String = "UL_Programs"
@@ -30,6 +29,28 @@ Private Const iCost As Integer = 16
 Private Const iCAType As Integer = 17
 Private Const iRebate As Integer = 18
 Private Const iApprop As Integer = 20
+Private Const strCstHeaders As Variant = Array("PROGRAM DESCRIPTION", _
+    "START DATE","END DATE","LEAD VA","LEAD CA","VA TYPE","VENDOR", _
+    "BB FORMAT","COST BASIS","CA TYPE","REBATE BASIS","PRE APPROVAL", _
+    "APPROP NAME","PRN/GRP","PACKET","PACKET DL","COMMENTS","","","","","")
+Private Const strCstFlds As String = _
+    & "ROGRAM_DESCRIPTION, " _
+    & "START_DATE, " _
+    & "END_DATE, " _
+    & "LEAD_VA, " _
+    & "LEAD_CA, " _
+    & "VEND_AGMT_TYPE, " _
+    & "VENDOR_NUM, " _
+    & "BILLBACK_FORMAT, " _
+    & "COST_BASIS, " _
+    & "CUST_AGMT_TYPE, " _
+    & "REBATE_BASIS, " _
+    & "PRE_APPROVAL, " _
+    & "APPROP_NAME, " _
+    & "PRN_GRP, " _
+    & "PACKET, " _
+    & "PACKET_DL, " _
+    & "COMMENTS"
 
 'Declare private class variables
 Private dictCol As New Scripting.Dictionary
@@ -37,6 +58,26 @@ Private dictType As New Scripting.Dictionary
 Private dictIndex As New Scripting.Dictionary
 Private iCol As Integer
 Private iRow As Integer
+
+
+'*******************************************************************************
+'Property to return customer friendly headers
+'*******************************************************************************
+Public Property Get CstHeaders() As String
+
+    'Return class sheet name
+    CstHeaders = strCstHeaders
+End Property
+
+
+'*******************************************************************************
+'Property to return customer friendly Db field names
+'*******************************************************************************
+Public Property Get CstFlds() As String
+
+    'Return class sheet name
+    CstFlds = strCstFlds
+End Property
 
 
 '*******************************************************************************
@@ -215,17 +256,16 @@ Sub AddDataValidation()
     Dim rngYN As Range
     Dim rngDrp As Range
     Dim varRng As Variant
-    Dim iLRow As Long
     Dim iDropLR As Integer
+
+    'Get last row
+    iLRow = LastRow(strSht)
 
     'Activate programs tab
     With Sheets(strSht)
 
         'Remove data validation from sheet
         .Cells.Validation.Delete
-
-        'Find last row
-        iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row
 
         'Set range for fields which will have Y/N drop down
         Set rngYN = .Range(.Cells(2, iDAB + 1), .Cells(iLRow, iTime + 1))
@@ -251,7 +291,7 @@ Sub AddDataValidation()
         'Loop through each column of DropDowns tab
         For i = 0 To UBound(varRng)
 
-            'Get last row of dropdown fields
+            'Get last row of dropdown fields (custom columns)
             iDropLR = .Cells(.Rows.Count, i + 1).End(xlUp).Row
 
             'Save dropdown Range

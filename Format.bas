@@ -11,28 +11,24 @@ Private Const shtProperties As String = _
     "AllowSorting:=False, " & _
     "AllowFiltering:=True"
 
-'Declare private module variables
-Private iLRow As Long
-Private iLCol As Integer
-
 
 '*******************************************************************************
 'Unlocks sheet using password constant. Parameter is sheet to unlock.
 '*******************************************************************************
-Sub ShtUnlock(strSheet As String)
+Sub ShtUnlock(strSht As String)
 
     'unprotect sheet
-    Sheets(strSheet).Unprotect shtPWD
+    Sheets(strSht).Unprotect shtPWD
 End Sub
 
 
 '*******************************************************************************
 'Lock sheet using password constant. Parameter is sheet to lock.
 '*******************************************************************************
-Sub ShtLock(strSheet As String)
+Sub ShtLock(strSht As String)
 
     'Protect sheet with constant variables
-    Sheets(strSheet).Protect Password:=strPWD, shtProperties
+    Sheets(strSht).Protect Password:=strPWD, shtProperties
 End Sub
 
 
@@ -53,11 +49,13 @@ Sub ClearShts()
         'Unlock sheets
         shtUnlock(sht)
 
+        'Get last row
+        iLRow = LastRow(sht) + 1
+
         'Focus on sheet and clear all data
         With Sheets(sht)
             .ShowAll
-            iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row
-            .Range("A2:A" & iLRow + 1).EntireRow.Delete
+            .Range("A2:A" & iLRow).EntireRow.Delete
         End With
 
         'Lock sheets
@@ -75,10 +73,12 @@ Sub ShtRefresh(obj As Object, upd As ADODB.Recordset)
     'Unlock sheet
     ShtUnlock(obj.Sht)
 
+    'Get last row of sheet
+    iLRow = LastRow(obj.Sht) + 1
+
     'Clear previous sheet content and paste new
     With Sheets(obj.Sht)
         .ShowAll
-        iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
         .Cells(iLRow, 1).CopyFromRecordset upd
     End With
 
@@ -103,8 +103,8 @@ Sub AddFormat(obj As Object)
     With Sheets(obj.Sht)
 
         'Get last row and last COLUMN_NUM
-        iLRow = .Cells(.Rows.Count,1).End(xlUp).Row
-        iLCol = .Cells(1,.Columns.Count).End(xlToLeft).Column
+        iLRow = LastRow(obj.Sht)
+        iLCol = LastCol(obj.Sht)
 
         'Format Columns (width/height)
         .Columns.ColumnWidth = 100
@@ -154,6 +154,9 @@ Sub AddCondFormatting()
     'Get pertinant column indeces
     iStrt = oPrgms.ColIndex("START_DATE") + 1
     iEnd = oPrgms.ColIndex("END_DATE") + 1
+
+    'Get last row of sheet
+    iLRow = LastRow("Programs")
 
     'Activate Programs tab
     With Sheets("Programs")
@@ -241,8 +244,8 @@ Sub ReviseDropDwns(varCst As Variant)
         'Loop through all customers in passthrough array
         For i = 0 To Ubound(varCst)
 
-            'Find last row
-            iLRow = .Cells(.Rows.Count,1).End(xlUp).Row + 1
+            'Get last row (custom column)
+            iLRow = .Cells(.Rows.Count,"H").End(xlUp).Row + 1
 
             'Add customers to assigned customer list
             .Cells(iLRow, "H").Value = varCst(i)

@@ -14,7 +14,6 @@ Sub Initialize()
 
     'Show utility elements
     Utility.Show(oBtnPull.GetShapes)
-
 End Sub
 
 
@@ -32,49 +31,39 @@ Sub btnSelect()
     'Get array of selected customer(s)
     varCst = Utility.GetSelection
 
-    'Alert user and exit sub if no customers were selected
-    If IsEmpty(varCst) Then
+    'If customers were selected from list
+    If Not IsEmpty(varCst) Then
+
+        'Get string of selected customers (comma and quote delimited)
+        strCst = GetStr(varCst, True)
+
+        'Update/insert all new recordset
+        oPrgms.Push
+        oCst.Push
+        oDevLds.Push
+
+        'Add/remove customers from DropDowns
+        Format.ReviseDropDwns(varCst)
+
+        'Format sheets and insert updated server data
+        Format.ShtRefresh(oPrgms, Pull.GetPrograms(strCst, "*"))
+        Format.ShtRefresh(oCst, Pull.GetCstProfile(strCst, "*"))
+        Format.ShtRefresh(oDevLds, Pull.GetDevLds(strCst, "*"))
+
+        'Save all sheet data set to static dictionary
+        Set tempDct = oPrgms.GetSaveData(True)
+        Set tempDct = oCst.GetSaveData(True)
+        Set tempDct = oDev.GetSaveData(True)
+
+        'Clear utility shapes
+        Utility.ClearShapes
+
+    'If no customers were selected from list
+    Else
+
+        'Alert user and exit sub if no customers were selected
         msgbox "You must select at least one customer."
-        Goto NoCst
     End If
-
-    'Get string of selected customers (comma and quote delimited)
-    strCst = GetStr(varCst, True)
-
-    'Update/insert all new recordset
-    oPrgms.Push
-    oCst.Push
-    oDevLds.Push
-
-    'Add/remove customers from DropDowns
-    Format.ReviseDropDwns(varCst)
-
-    'Establish connection to SQL server
-    cnn.Open _
-        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
-
-    'Format sheets and insert updated server data
-    Format.ShtRefresh(oPrgms, Pull.GetPrograms(strCst))
-    Format.ShtRefresh(oCst, Pull.GetCstProfile(strCst))
-    Format.ShtRefresh(oDevLds, Pull.GetDevLds(strCst))
-
-    'Close connection
-    cnn.Close
-
-    'Save all sheet data set to static dictionary
-    Set tempDct = oPrgms.GetSaveData(True)
-    Set tempDct = oCst.GetSaveData(True)
-    Set tempDct = oDev.GetSaveData(True)
-
-    'Clear utility shapes
-    Utility.ClearShapes
-
-'Label to alert user of missing selection
-NoCst:
-
-    'Free objects
-    Set cnn = Nothing
-    Set rst = Nothing
 End Sub
 
 

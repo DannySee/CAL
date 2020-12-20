@@ -3,12 +3,11 @@ BEGIN
   MultiUse = -1  'True
 END
 
-Attribute VB_Name = "clsCustProfile"
+Attribute VB_Name = "clsCstProfile"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-
 
 'Declare private class constants
 Private Const strSht As String = "Customer Profile"
@@ -138,17 +137,16 @@ Sub AddDataValidation()
     'Declare sub variables
     Dim rngCst As Range
     Dim rngDrp As Range
-    Dim iLRow As Integer
     Dim iDropLR As Integer
+
+    'Find last row
+    iLRow = LastRow(strSht) + 1
 
     'Activate programs tab
     With Sheets(strSht)
 
         'Remove data validation from sheet
         .Cells.Validation.Delete
-
-        'Find last row
-        iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
 
         'save range to add DropDowns
         Set rngCst = .Range(.Cells(2, iCst + 1), .Cells(iLRow, iCst + 1))
@@ -157,7 +155,7 @@ Sub AddDataValidation()
     'Activate DropDowns tab
     With Sheets("DropDowns")
 
-        'Get last row of dropdown fields
+        'Get last row of dropdown fields (custom column)
         iDropLR = .Cells(.Rows.Count, "H").End(xlUp).Row + 1
 
         'Save dropdown Range

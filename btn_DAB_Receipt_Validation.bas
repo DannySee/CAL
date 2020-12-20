@@ -1,5 +1,6 @@
 Attribute VB_Name = "btn_DAB_Receipt_Validation"
 
+
 '*******************************************************************************
 'Show all utility elemenst, pdate and resize listbox. Testing
 '*******************************************************************************

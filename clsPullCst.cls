@@ -9,7 +9,6 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
-
 'Declare private class constants
 Private Const varShapes As Variant = Array("Cust_Add_Pane", _
     "Multiuse_Listbox","Cust_Add_Cancel","Cust_Add_Select")

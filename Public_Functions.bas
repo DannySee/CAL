@@ -7,8 +7,9 @@ Public oPrgms As New clsPrograms
 Public oCst As new clsCustProfile
 Public oDev As New clsDevLoads
 Public oBtnPull As New clsPullCst
-Public oBtnDwn As New clsDonwloadCAL
 Public netID As String
+Public iLRow As Long
+Public iLCol As Integer
 Public i As Integer
 
 
@@ -149,4 +150,28 @@ Public Function GetStr(upd As Variant, blStr) As String
 
     'Return string of customer names
     GetStr = strVal
+End Function
+
+
+'*******************************************************************************
+'Return last row of active sheet assuming data starts in cell A1
+'*******************************************************************************
+Public Function LastRow(strSht As String) As Long
+
+    'Return last row of active sheet
+    With Sheets(strSht)
+        LastRow = .Cells(.Rows.Count, 1).End(xlUp).Row
+    End With
+End Function
+
+
+'*******************************************************************************
+'Return last column of active sheet assuming data starts in cell A1
+'*******************************************************************************
+Public Function LastCol(strSht As String) As Integer
+
+    'Return last column of active sheet
+    With Sheets(strSht)
+        lastCol = .Cells(1, .Columns.Count).End(xlToLeft).Column
+    End With
 End Function

@@ -2,13 +2,12 @@ Attribute VB_Name = "btn_Download_CAL_By_Customer"
 
 
 '*******************************************************************************
-'Download CAL account assignments by customer. Testing
+'Download CAL account assignments by customer.
 '*******************************************************************************
 Sub Initialize()
 
     'Declare sub variables
     Dim varCst As Variant
-    Dim varHeaders As Variant
     Dim strCst As String
     Dim strPth As String
     Dim wb As Workbook
@@ -20,27 +19,17 @@ Sub Initialize()
     varCst = Pull.GetCst(True)
 
     'Alert user and exit sub if no assigned customers/selected folder
-    If IsEmpty(varCst) Or strPth = "" Then Goto NoCst
+    If Not IsEmpty(varCst) And strPth <> "" Then
 
-    'Get array of customer friendly headers
-    varHeaders = oBtnDwn.Headers
+        'Loop through all assigned customers
+        For each cst In varCst
 
-    'Loop through all assigned customers
-    For each cst In varCst
+            'Create customer friendly CAL Workbook and set to variable
+            Set wb = Utility.DwnCstCAL(cst)
 
-        'Create new workbook with formatting
-        Set wb = Utility.CreateWorkbook(cst)
-
-        'Setup customer string with quote delimiters
-        strCst = "'" & cst & "'"
-
-        'Format sheets and insert updated server date
-        Cells(2,1).CopyFromRecordset Pull.GetPrograms(strCst)*******************
-
-        'Add headers to sheet to sheet with formatting
-        Utility.AddHeaders(varHeaders)
-    Next
-
-'Jump to label to skip sub routine
-NoCst:
+            'Save and close workbook
+            wb.Close SaveChanges:=True, Filename:= _
+                strPth & cst & " CUSTOMER AGREEMENT LIST.xlsx"
+        Next
+    End If
 End Sub
