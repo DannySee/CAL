@@ -31,6 +31,36 @@ End Function
 
 
 '*******************************************************************************
+'Query programs tab. Parameter is the user's network ID. Only pulls assigned
+'customers. Returns open recordset
+'*******************************************************************************
+Function GetExpPrograms(strCst As String) As ADODB.Recordset
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Pull expiring contracts
+    rst.Open "SELECT PROGRAM_DESCRIPTION " _
+        & "FROM UL_Programs " _
+        & "INNER JOIN (" _
+            & "SELECT MAX(END_DATE) AS ED, PROGRAM_ID AS PID " _
+            & "FROM UL_Programs " _
+            & "WHERE CUSTOMER = '" & strCst & "' " _
+            & "GROUP BY PROGRAM_ID) AS O " _
+        & "ON PROGRAM_ID = O.PID AND END_DATE = O.ED " _
+        & "WHERE VENDOR_NUM <> 1 " _
+        & "AND END_DATE < " & Now(), cnn
+
+    'Return query results
+    GetExpPrograms = rst
+
+    'Close connection/recordset and free free objects
+    FreeObjects
+End Function
+
+
+'*******************************************************************************
 'Query Customer Profile tab. Parameter is the user's network ID. Only pulls
 'assigned customers. Returns open recordset
 '*******************************************************************************

@@ -203,6 +203,63 @@ Function DwnCstCAL(strCst As String) As Workbook
     'Add borders to Workbook
     AddBorders
 
+    'Add conditional formatting (indeces are for Excel start/end date fields)
+    Format.AddCondFormatting(2,3)
+
     'Return Workbook
     Set DwnCstCAL = ActiveWorkbook
 End Function
+
+
+'*******************************************************************************
+'Assemble body of reminder emails (bulleted list of expiring agreements).
+'*******************************************************************************
+Function GetReminderBody(strCst As String) As String
+
+    'Declare function variables
+    Dim exp As ADODB.Recordset
+    Dim strExp As String
+    Dim strDelmtr As String
+
+    'Get recordset of expiring progrmas
+    Set exp = Pull.GetExpPrograms(strCst)
+
+    'Setup string delimiter variable
+    strDelmtr = vbLf & "   " & Chr(149) & " "
+
+    'Assemble string of program descriptions (bulleted & n\)
+    Do While exp.EOF = False
+        strExp = strExp & strDelmtr & exp.Fields("PROGRAM_DESCRIPTION").value
+        rst.MoveNext
+    Loop
+
+    'Return string of expiring agreements
+    GetReminderBody = strExp
+End Sub
+
+
+'*******************************************************************************
+'Send reminder to DPM hotline Salesforce queue.
+'*******************************************************************************
+Sub SendReminder(strSubject As String, strTxt As String, strFile As String)
+
+    'Declare sub variables
+    Dim olOutlook As New Outlook.Application
+    Dim olEmail As Object
+
+    'Set email object
+    Set olEmail = olOutlook.CreateItem(olMailItem)
+
+    'Send email to inquiries queue
+     With olEmail
+        .To = "DPMHotline@corp.sysco.com"
+        .Subject = strSubject
+        .Body = strTxt
+        .Attachments.Add strFile
+        .Send
+    End With
+
+    'Free objects
+    Set olEmail = Nothing
+    Set olOutlook = Nothing
+End Sub

@@ -175,3 +175,21 @@ Public Function LastCol(strSht As String) As Integer
         lastCol = .Cells(1, .Columns.Count).End(xlToLeft).Column
     End With
 End Function
+
+
+'*******************************************************************************
+'Return next month and year
+'*******************************************************************************
+Public Function NextMonth() As String
+
+    'Declare function variables
+    Dim StrMonth As String
+    Dim iYear As Integer
+
+    'Get month and year
+    strMonth = MonthName(Month(DateAdd("m", 1, Date)))
+    iYear = Year(DateSerial(Year(Now), Month(Now) + 1, 1))
+
+    'Return month and year
+    NextMonth = strMonth & " " & iYear
+End Function

@@ -135,7 +135,9 @@ Sub AddFormat(obj As Object)
     obj.AddDataValidation
 
     'If active sheet is Programs tab then add end date condition formatting
-    If obj.Sht = "Programs" Then AddCondFormatting
+    If obj.Sht = "Programs" Then AddCondFormatting( _
+        oPrgms.ColIndex("START_DATE") + 1, _
+        oPrgms.ColIndex("END_DATE") + 1)
 End Sub
 
 
@@ -143,17 +145,11 @@ End Sub
 'Add conditional formatting to the Programs tab. Weekly programs are highlighted
 'green and programs expiring EOM are highlighted red.
 '*******************************************************************************
-Sub AddCondFormatting()
+Sub AddCondFormatting(iStrt As Integer, iEnd As Integer)
 
     'Declare sub variables
     Dim rngFrmt As Range
-    Dim iStrt As Integer
-    Dim iEnd As Integer
     Dim strDteRng As String
-
-    'Get pertinant column indeces
-    iStrt = oPrgms.ColIndex("START_DATE") + 1
-    iEnd = oPrgms.ColIndex("END_DATE") + 1
 
     'Get last row of sheet
     iLRow = LastRow("Programs")
