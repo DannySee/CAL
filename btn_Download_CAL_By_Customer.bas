@@ -2,7 +2,7 @@ Attribute VB_Name = "btn_Download_CAL_By_Customer"
 
 
 '*******************************************************************************
-'Download CAL account assignments by customer.
+'Download CAL account assignments by customer. Testing
 '*******************************************************************************
 Sub Initialize()
 
