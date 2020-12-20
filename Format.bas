@@ -8,7 +8,7 @@ Private Const shtProperties As String = _
     "AllowDeletingRows:=True, " & _
     "AllowFormattingRows:=True, " & _
     "AllowInsertingRows:=True, " & _
-    "AllowSorting:=False, " & _
+    "AllowSorting:=True, " & _
     "AllowFiltering:=True"
 
 
