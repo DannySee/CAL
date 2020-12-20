@@ -6,7 +6,6 @@ Public rst As New ADODB.Recordset
 Public oPrgms As New clsPrograms
 Public oCst As new clsCustProfile
 Public oDev As New clsDevLoads
-Public oBtnPull As New clsPullCst
 Public netID As String
 Public iLRow As Long
 Public iLCol As Integer

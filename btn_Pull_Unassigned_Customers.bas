@@ -1,8 +1,12 @@
 Attribute VB_Name = "btn_Pull_Unassigned_Customers"
 
+'Declare private module constants
+Private Const varShp As Variant = _Array("Cust_Add_Pane", _
+    "Multiuse_Listbox","Cust_Add_Cancel","Cust_Add_Select")
+
 
 '*******************************************************************************
-'Show all utility elemenst, pdate and resize listbox.
+'Show all utility elements, update and resize listbox.
 '*******************************************************************************
 Sub Initialize()
 
@@ -13,7 +17,7 @@ Sub Initialize()
     Utility.UpdateListbox(False)
 
     'Show utility elements
-    Utility.Show(oBtnPull.GetShapes)
+    Utility.Show(varShp)
 End Sub
 
 
@@ -43,12 +47,12 @@ Sub btnSelect()
         oDevLds.Push
 
         'Add/remove customers from DropDowns
-        Format.ReviseDropDwns(varCst)
+        Utility.ReviseDropDwns(varCst)
 
         'Format sheets and insert updated server data
-        Format.ShtRefresh(oPrgms, Pull.GetPrograms(strCst, "*"))
-        Format.ShtRefresh(oCst, Pull.GetCstProfile(strCst, "*"))
-        Format.ShtRefresh(oDevLds, Pull.GetDevLds(strCst, "*"))
+        Utility.ShtRefresh(oPrgms, Pull.GetPrograms(strCst, "*"))
+        Utility.ShtRefresh(oCst, Pull.GetCstProfile(strCst, "*"))
+        Utility.ShtRefresh(oDevLds, Pull.GetDevLds(strCst, "*"))
 
         'Save all sheet data set to static dictionary
         Set tempDct = oPrgms.GetSaveData(True)

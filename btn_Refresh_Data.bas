@@ -12,7 +12,7 @@ Sub Initialize()
     Dim strCst As String
 
     'Clear data from sheets
-    Format.ClearShts
+    Utility.ClearShts
 
     'Get String of my customer names
     strCst = GetStr(Pull.GetCst(True), True)
@@ -21,12 +21,12 @@ Sub Initialize()
     If strCst <> "" Then
 
         'Refresh drop
-        Format.AddDropDwns
+        Utility.AddDropDwns
 
         'Format sheets and insert updated server data
-        Format.ShtRefresh(oPrgms, Pull.GetPrograms(strCst, "*"))
-        Format.ShtRefresh(oCst, Pull.GetCstProfile(strCst, "*"))
-        Format.ShtRefresh(oDevLds, Pull.GetDevLds(strCst, "*"))
+        Utility.ShtRefresh(oPrgms, Pull.GetPrograms(strCst, "*"))
+        Utility.ShtRefresh(oCst, Pull.GetCstProfile(strCst, "*"))
+        Utility.ShtRefresh(oDevLds, Pull.GetDevLds(strCst, "*"))
 
         'Save all sheet data set to static dictionary
         Set tempDct = oPrgms.GetSaveData(True)
