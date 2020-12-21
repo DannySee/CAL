@@ -1,6 +1,9 @@
 Attribute VB_Name = "btn_Generate_Reminders"
 
 'Declare private module constants
+Private Const varShp As Variant = _Array("Cust_Add_Pane", _"Multiuse_Listbox", _
+    "Cust_Add_Cancel","Cust_Add_Select","Listbox_Account_Tgl","Listbox_All", _
+    "Listbox_Holder_Tgl")
 Private Const strHeader As String = _
     "Hello," & vbLf & vbLf & "Please read this notification in its entirety." _
     & vbLf & vbLf & "Our records indicate that we are still missing the " _

@@ -268,40 +268,6 @@ End Sub
 
 
 '*******************************************************************************
-'Update multiuse listbox with list of customers. Boolean operator indicates
-'if listbox should conatain assigned customers or unassigned customers.
-'*******************************************************************************
-Sub UpdateListbox(blMyCst As Boolean)
-
-    'Focus on dropdowns sheet
-    With Sheets("DropDowns")
-
-        'If listbox should be populated with assigned customers
-        If blMyCst = True Then
-
-            'Find last row of Dropowns sheet (custom column)
-            iLRow = Cells(.Rows.Count, "H").End(xlUp).Row + 1
-
-            'Update customer list be just unassigned customers
-            Multiuse_Listbox.List = .Range("H1:H" & iLRow).Value
-
-        'If listbox should be populated with unassigned customers
-        Else
-
-            'Find last row of Dropowns sheet (custom column)
-            iLRow = Cells(.Rows.Count, "I").End(xlUp).Row + 1
-
-            'Update customer list be just unassigned customers
-            Multiuse_Listbox.List = .Range("I1:I" & iLRow).Value
-        End If
-    End With
-
-    'Correct listbox sizing
-    ResizeListbox
-End Sub
-
-
-'*******************************************************************************
 'Resize multiuse listbox to help accomodate different screen aspect ratios.
 '*******************************************************************************
 Sub ResizeListbox()
@@ -514,4 +480,93 @@ Sub SendReminder(strSubject As String, strTxt As String, strFile As String)
     'Free objects
     Set olEmail = Nothing
     Set olOutlook = Nothing
+End Sub
+
+
+'*******************************************************************************
+'Select all elements from multiuse listbox
+'*******************************************************************************
+Sub UpdateListboxAll(strSubject As String, strTxt As String, strFile As String)
+
+
+End Sub
+
+
+'*******************************************************************************
+'Update multiuse listbox with list of customers. Boolean operator indicates
+'if listbox should conatain assigned customers or unassigned customers.
+'*******************************************************************************
+Sub UpdateListboxCst(blMyCst As Boolean)
+
+    'Focus on dropdowns sheet
+    With Sheets("DropDowns")
+
+        'If listbox should be populated with assigned customers
+        If blMyCst = True Then
+
+            'Find last row of Dropowns sheet (custom column)
+            iLRow = Cells(.Rows.Count, "H").End(xlUp).Row + 1
+
+            'Update customer list be just unassigned customers
+            Multiuse_Listbox.List = .Range("H1:H" & iLRow).Value
+
+        'If listbox should be populated with unassigned customers
+        Else
+
+            'Find last row of Dropowns sheet (custom column)
+            iLRow = Cells(.Rows.Count, "I").End(xlUp).Row + 1
+
+            'Update customer list be just unassigned customers
+            Multiuse_Listbox.List = .Range("I1:I" & iLRow).Value
+        End If
+    End With
+
+    'Highlight button
+    ResetListToggle
+    Sheets("Control Panel").Shapes("Listbox_Account_Tgl").Interior.Color = _
+        RGB(64,64,64)
+
+    'Correct listbox sizing
+    ResizeListbox
+End Sub
+
+
+'*******************************************************************************
+'Update multiuse listbox with list of account holders. Boolean operator
+'indicates if listbox should conatain assigned/unassigned customers.
+'*This function will only work for other user's account assignments
+'*******************************************************************************
+Sub UpdateListboxAss()
+
+    'Focus on dropdowns sheet
+    With Sheets("DropDowns")
+
+        'Find last row of Dropowns sheet (custom column)
+        iLRow = Cells(.Rows.Count, "J").End(xlUp).Row + 1
+
+        'Update customer list be just unassigned customers
+        Multiuse_Listbox.List = .Range("J1:J" & iLRow).Value
+    End With
+
+    'Update toggle color
+    ResetListToggle
+    Sheets("Control Panel").Shapes("Listbox_Holder_Tgl").Interior.Color = _
+        RGB(64,64,64)
+
+    'Correct listbox sizing
+    ResizeListbox
+End Sub
+
+
+'*******************************************************************************
+'Reset listbox toggle buttons to default color
+'*******************************************************************************
+Sub ResetListToggle()
+
+    'Set all toggle
+    With Sheets("Control Panel")
+        .Shapes("Listbox_Holder_Tgl").Interior.Color = RGB(89,89,89)
+        .Shapes("Listbox_Account_Tgl").Interior.Color = RGB(89,89,89)
+        .Shapes("Listbox_All_Tgl").Interior.Color = RGB(89,89,89)
+    End With
 End Sub
