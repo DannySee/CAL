@@ -316,8 +316,18 @@ Function GetSelection() As Variant
         Next
     End With
 
-    'Return string of customers
-    If strCst <> "" Then GetSelection = Split(strCst, ",")
+    'If a selection was made
+    If strCst <> "" Then
+
+        'Return a list of customers if slection is by account holder, not customer
+        If ToggleAssociate Then
+            strCst = GetStr(Split(strCst, ","), True)
+            strCst = Pull.GetAssignments(strCst))
+        End If
+
+        'Return string of customers
+         GetSelection = Split(strCst, ",")
+    End If
 End Function
 
 
@@ -555,6 +565,18 @@ Sub UpdateListboxAss()
 
     'Correct listbox sizing
     ResizeListbox
+End Sub
+
+
+'*******************************************************************************
+'Returns Boolean value to indicate if multiuse listbox selection was made with
+'containing customer or account holder.
+'*******************************************************************************
+Function ToggleAssociate() As Boolean
+
+    'Return true if associate name was selected
+    If Sheets("Control Panel").Shapes("Listbox_Account_Tgl").Interior.Color = _
+        RGB(64,64,64) Then IsAssociate = True
 End Sub
 
 

@@ -113,9 +113,6 @@ End Function
 '*******************************************************************************
 Function GetDropDwns() As Variant
 
-    'Declare function variables
-    Dim var As Variant
-
     'Establish connection to SQL server
     cnn.Open _
         "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
@@ -124,14 +121,8 @@ Function GetDropDwns() As Variant
     rst.Open "SELECT DROP_DOWN " _
         & "FROM UL_List_Options", cnn
 
-    'Create multidimensional array from query results
-    var = rst.GetRows()
-
-    'Close recordset
-    rst.Close
-
     'Return multidimensional array of drop down list data
-    GetDropDowns = var
+    GetDropDowns = rst.GetRows()
 
     'Close connection/recordset and free free objects
     FreeObjects
@@ -145,15 +136,18 @@ End Function
 Function GetCst(blMyCst As Boolean) As Variant
 
     'Declare function variables
-    Dim var As Variant
     Dim strVal As String
-    Dim strEq As String
+    Dim strOp As String
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
 
     'Set equal character
     If blMyCst = False Then
-        strEq = "<>"
+        strOp = "<>"
     Else
-        strEq = "="
+        strOp = "="
     End If
 
     'Set variable to current user Network ID
@@ -162,7 +156,7 @@ Function GetCst(blMyCst As Boolean) As Variant
     'Query all assigned customer names
     rst.Open "SELECT CUSTOMER_NAME AS CST " _
         & "FROM UL_ACCOUNT_ASS " _
-        & "WHERE T1_ID " & strEq & " '" & netID & "' " _
+        & "WHERE T1_ID " & strOp & " '" & netID & "' " _
         & "ORDER BY CUSTOMER_NAME", cnn
 
     'Assemble string from query results
@@ -171,14 +165,39 @@ Function GetCst(blMyCst As Boolean) As Variant
         rst.MoveNext
     Loop
 
-    'Close recordset
-    rst.Close
+    'Return Array of assigned customer names
+    GetMyCst = Split(strVal, ",")
 
-    'Split string into array (split by comma)
-    var = Split(strVal, ",")
+    'Close connection/recordset and free free objects
+    FreeObjects
+End Function
+
+
+'*******************************************************************************
+'Query all acount assignments given network ID(s).
+'*******************************************************************************
+Function GetAssignments(strID As String) As Variant
+
+    'Declare function variables
+    Dim strVal As String
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Query all assigned customer names
+    rst.Open "SELECT CUSTOMER_NAME AS CST " _
+        & "FROM UL_ACCOUNT_ASS " _
+        & "WHERE T1_ID IN (" & strID & ")", cnn
+
+    'Assemble string from query results
+    Do While rst.EOF = False
+        strVal = Append(strVal & "," & rst.Fields("CST").Value)
+        rst.MoveNext
+    Loop
 
     'Return Array of assigned customer names
-    GetMyCst = var
+    GetMyCst = strVal
 
     'Close connection/recordset and free free objects
     FreeObjects
