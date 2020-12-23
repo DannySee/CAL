@@ -1,8 +1,6 @@
 Attribute VB_Name = "Custom_Functions"
 
 'Declare public project variables
-Public cnn As New ADODB.Connection
-Public rst As New ADODB.Recordset
 Public oPrgms As New clsPrograms
 Public oCst As new clsCustProfile
 Public oDev As New clsDevLoads
@@ -57,37 +55,6 @@ End Function
 
 
 '*******************************************************************************
-'Return multidimensional array of Excel sheet data.
-'*******************************************************************************
-Public Function GetXL(strSht As String) As Variant
-
-    'Declare function variables
-    Dim stCon as String
-    Dim var As Variant
-
-    'Save connection string (connection to CAL workbook)
-    stCon = "Provider=Microsoft.ACE.OLEDB.12.0;" & _
-        "Data Source=" & ThisWorkbook.FullName & ";" & _
-        "Extended Properties=""Excel 12.0 Xml;HDR=YES"";"
-
-    'Query file (from passthrough sheet) and return results in an open recordset
-    rst.Open "SELECT * FROM [" & strSht & "$] ORDER BY PRIMARY_KEY", stCon
-
-    'Parse recordset into an multidimensional array
-    If Not rst.EOF Then var = rst.GetRows()
-
-    'Close recordset and connection & free objects
-    rst.Close
-    cnn.Close
-    Set rst = Nothing
-    Set cnn = Nothing
-
-    'Return multidimensional array of Excel data (from passthrough sheet)
-    GetXL = var
-End Function
-
-
-'*******************************************************************************
 'Returns updated dictionary of Excel data (Key = Primary_Key, Value = Array
 'of fields). Meant to update the passthrough dictionary with static dictionary.
 '*******************************************************************************
@@ -101,7 +68,7 @@ Public Function RefreshDct(strSht As String) As Scripting.Dictionary
     Dim iCol As Integer
 
     'Save multidimensional array of program data
-    var = GetXL(strSht)
+    var = Pull.GetXL(strSht)
 
     'Create an empty array with an index for each program field'
     ReDim arr(UBound(var, 1))

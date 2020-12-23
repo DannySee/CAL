@@ -204,23 +204,8 @@ Function GetIns(var As Variant, iRow As integer) As String
     'If array does not contain customer ID data
     If IsNull(var(iPKey, iRow)) Then
 
-        'Establish conection to SQL server
-        cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1" _
-            & ";DATABASE=Pricing_Agreements;"
-
-        'Query customer and program IDs from customer name
-        rst.Open "SELECT TOP 1 CUSTOMER_ID AS CID " _
-            & "FROM " & strDb & " WHERE CUSTOMER = '" _
-            & var(iCst, iRow) & "' ", cnn
-
-        'Assemble first 3 fields of SQL insert string
-        strGutter = rst.Fields("CID").value
-
-        'Close and free objects
-        rst.Close
-        cnn.Close
-        Set rst = Nothing
-        Set cnn = Nothing
+        'set gutter string (hidden values) - query ID from account assignments
+        strGutter = Pull.GetCstID(var(iCst, iRow))
     Else
 
         'Assemble first 3 fields of SQL insert string
@@ -356,7 +341,7 @@ Function GetChanges() As Scripting.Dictionary
     Set old = GetSaveData(False)
 
     'Get new dictionary data (new data for comparison)
-    Set upd = GetXL(strSht)
+    Set upd = Pull.GetXL(strSht)
 
     'Loop through rows of current program data
     For iRow = 0 To UBound(upd, 2)
@@ -398,32 +383,6 @@ End Function
 
 
 '*******************************************************************************
-'Executes SQL update statement to CAL database. Paramaters are an array of
-'update statements (one element per statement).
-'*******************************************************************************
-Sub UploadChanges(upd As Variant)
-
-    'Declare function variables
-    Dim i As Integer
-
-    'Establish connection to SQL server
-    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
-        & "DATABASE=Pricing_Agreements;"
-
-    'Loop through each update statement in passthrough array
-    For i = 0 To UBound(upd)
-
-        'Execute update statement
-        cnn.Execute "UPDATE " & strDb & " SET " & upd(i)
-    Next
-
-    'Close recordset and free Objects
-    cnn.Close
-    Set cnn = Nothing
-End Sub
-
-
-'*******************************************************************************
 'Execute SQL insert statement to CAL database. passthrough variables are an
 'array of insert statements (one element per statement) and an array with the
 'corresponding excel row numbers.
@@ -431,30 +390,17 @@ End Sub
 Sub DeleteRecords(strDel As String)
 
     'Delcare sub variables
+    Dim varDel As Variant
     Dim strIns As String
 
-    'Establish connection to SQL server
-    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
-        & "DATABASE=Pricing_Agreements;"
-
-    rst.Open "DELETE FROM " & strDb & " " _
-        & "OUTPUT DELETED.* " _
-        & "WHERE PRIMARY_KEY IN (" & strDel & ")", cnn
+    'Get multidimensional array of deleted customer elements
+    varDel = Push.GetDeleted(strDel, strDb)
 
     'Get SQL insert string for archive tables & add network ID
-    strIns = GetIns(rst.GetRows(), 0) & ",'" & Environ("Username") & "'"
+    strIns = GetIns(varDel, 0) & ",'" & Environ("Username") & "'"
 
-    'Close recordset
-    rst.Close
-
-    'Insert deleted record into deleted table
-    cnn.Execute "INSERT INTO " & strDbx & " " _
-        & "VALUES(" & strIns & ")"
-
-    'Close recordset and free Objects
-    cnn.Close
-    Set cnn = Nothing
-    Set rst = Nothing
+    'Insert deleted record into archive table
+    Push.InsertDeleted(strIns, strDbx)
 End Sub
 
 
@@ -466,33 +412,26 @@ End Sub
 Sub InsertNew(ins As Variant, insRow As Variant)
 
     'Declare function variables
+    Dim retVal As ADODB.Recordset
+    Dim strSQL As String
     Dim i As Integer
-
-    'Establish connection to SQL server
-    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
-        & "DATABASE=Pricing_Agreements;"
 
     'Loop through each insert statement in passthrough array
     For i = 0 To UBound(ins)
 
-        'Execute insert statement & return primary key, customer and program ID
-        rst.Open "INSERT INTO " & strDb & " " _
+        'Set SQL string insert statement
+        strSQL = "INSERT INTO " & strDb & " " _
             & "OUTPUT inserted.PRIMARY_KEY AS PKEY, " _
             & "inserted.CUSTOMER_ID AS CID, " _
-            & "VALUES(" & ins(i) & ")", cnn
+            & "VALUES(" & ins(i) & ")"
+
+        'Insert elements and return new customer ID and Primary Key
+        Set retVal = Push.Insert(strSQL)
 
         'Update Excel file with primary key, customer ID & program ID
-        Cells(insRow(i), iPkey).value = rst.Fields("PKEY").value
-        Cells(insRow(i), iCID).value = rst.Fields("CID").value
-
-        'Close recordset
-        rst.Close
+        Cells(insRow(i), iPkey).value = retVal.Fields("PKEY").value
+        Cells(insRow(i), iCID).value = retVal.Fields("CID").value
     Next
-
-    'Close recordset and free Objects
-    cnn.Close
-    Set cnn = Nothing
-    Set rst = Nothing
 End Sub
 
 
@@ -509,7 +448,7 @@ Sub Push()
     Set dbChanges = GetChanges
 
     'If updates were made to worksheet fields, push updates to server
-    If dbChanges.Exists("UPDATE") Then UploadChanges(dbChanges("UPDATE"))
+    If dbChanges.Exists("UPDATE") Then Push.Update(dbChanges("UPDATE"), strDb)
 
     'If updates were made to worksheet fields, push updates to server
     If dbChanges.Exists("DELETE") Then DeleteRecords(dbChanges("DELETE"))

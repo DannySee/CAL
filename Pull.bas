@@ -7,6 +7,10 @@ Attribute VB_Name = "Pull"
 '*******************************************************************************
 Function GetPrograms(strCst As String, strFlds As String) As ADODB.Recordset
 
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+
     'Establish connection to SQL server
     cnn.Open _
         "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
@@ -24,9 +28,6 @@ Function GetPrograms(strCst As String, strFlds As String) As ADODB.Recordset
 
     'Return query results
     GetPrograms = rst
-
-    'Close connection/recordset and free free objects
-    FreeObjects
 End Function
 
 
@@ -35,6 +36,10 @@ End Function
 'customers. Returns open recordset
 '*******************************************************************************
 Function GetExpPrograms(strCst As String) As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
 
     'Establish connection to SQL server
     cnn.Open _
@@ -54,9 +59,6 @@ Function GetExpPrograms(strCst As String) As ADODB.Recordset
 
     'Return query results
     GetExpPrograms = rst
-
-    'Close connection/recordset and free free objects
-    FreeObjects
 End Function
 
 
@@ -65,6 +67,10 @@ End Function
 'assigned customers. Returns open recordset
 '*******************************************************************************
 Function GetCstProfile(strCst As String) As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
 
     'Establish connection to SQL server
     cnn.Open _
@@ -78,9 +84,6 @@ Function GetCstProfile(strCst As String) As ADODB.Recordset
 
     'Return query results
     GetCustProfile = rst
-
-    'Close connection/recordset and free free objects
-    FreeObjects
 End Function
 
 
@@ -89,6 +92,10 @@ End Function
 'assigned customers. Returns open recordset
 '*******************************************************************************
 Function GetDevLds(strCst As String) As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
 
     'Establish connection to SQL server
     cnn.Open _
@@ -102,9 +109,6 @@ Function GetDevLds(strCst As String) As ADODB.Recordset
 
     'Return query results
     GetCustProfile = rst
-
-    'Close connection/recordset and free free objects
-    FreeObjects
 End Function
 
 
@@ -112,6 +116,10 @@ End Function
 'Query all drop down list data. Returns multidimensional array
 '*******************************************************************************
 Function GetDropDwns() As Variant
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
 
     'Establish connection to SQL server
     cnn.Open _
@@ -123,9 +131,6 @@ Function GetDropDwns() As Variant
 
     'Return multidimensional array of drop down list data
     GetDropDowns = rst.GetRows()
-
-    'Close connection/recordset and free free objects
-    FreeObjects
 End Function
 
 
@@ -136,8 +141,11 @@ End Function
 Function GetCst(blMyCst As Boolean) As Variant
 
     'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
     Dim strVal As String
     Dim strOp As String
+
 
     'Establish connection to SQL server
     cnn.Open _
@@ -167,9 +175,6 @@ Function GetCst(blMyCst As Boolean) As Variant
 
     'Return Array of assigned customer names
     GetMyCst = Split(strVal, ",")
-
-    'Close connection/recordset and free free objects
-    FreeObjects
 End Function
 
 
@@ -179,6 +184,8 @@ End Function
 Function GetAssignments(strID As String) As Variant
 
     'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
     Dim strVal As String
 
     'Establish connection to SQL server
@@ -198,20 +205,73 @@ Function GetAssignments(strID As String) As Variant
 
     'Return Array of assigned customer names
     GetMyCst = strVal
-
-    'Close connection/recordset and free free objects
-    FreeObjects
 End Function
 
 
 '*******************************************************************************
-'close and free ADODB objects
+'Pull customer ID given customer name
 '*******************************************************************************
-Sub FreeObjects()
+Function GetCstID(strCst As String) As Long
 
-    'Close connection/recordset and free objects
-    rst.Close
-    cnn.Close
-    Set rst = Nothing
-    Set cnn = Nothing
-End Sub
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Query customer ID from customer name
+    rst.Open "SELECT TOP 1 CUSTOMER_ID AS CID " _
+        & "FROM UL_Account_Ass " _
+        & "WHERE CUSTOMER_NAME = '" & strCst & "'", cnn
+
+    'Return query results
+    GetCstID = rst.Fields("CID").Value
+End Function
+
+
+'*******************************************************************************
+'Pull customer ID & Program ID given customer name
+'*******************************************************************************
+Function GetCstPgmID(strCst As String) As String
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Query customer ID and program ID from customer name
+    rst.Open "SELECT TOP 1 CUSTOMER_ID AS CID, MAX(CAST(RIGHT(PROGRAM_ID, " _
+        & "CHARINDEX('-', REVERSE(PROGRAM_ID)) - 1) AS INT)) + 1 AS PID " _
+        & "FROM UL_Programs WHERE CUSTOMER = '" & strCst & "' " _
+        & "GROUP BY CUSTOMER_ID", cnn
+
+    'Return string of customer ID and program ID
+    GetCstID = rst.Fields("CID").value & ",'" & rst.Fields("CID").value _
+        & "-" & rst.Fields("PID").value & "'"
+End Function
+
+
+'*******************************************************************************
+'Return multidimensional array of Excel sheet data.
+'*******************************************************************************
+Public Function GetXL(strSht As String) As Variant
+
+    'Declare function variables
+    Dim stCon as String
+
+    'Save connection string (connection to CAL workbook)
+    stCon = "Provider=Microsoft.ACE.OLEDB.12.0;" & _
+        "Data Source=" & ThisWorkbook.FullName & ";" & _
+        "Extended Properties=""Excel 12.0 Xml;HDR=YES"";"
+
+    'Query file (from passthrough sheet) and return results in an open recordset
+    rst.Open "SELECT * FROM [" & strSht & "$] ORDER BY PRIMARY_KEY", stCon
+
+    'Return multidimensional array of Excel data (from passthrough sheet)
+    If Not rst.EOF Then GetXL = rst.GetRows
+End Function
