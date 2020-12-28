@@ -1,8 +1,8 @@
 Attribute VB_Name = "btn_Pull_Unassigned_Customers"
 
 'Declare private module constants
-Private Const varShp As Variant = _Array("Cust_Add_Pane", _"Multiuse_Listbox", _
-    "Cust_Add_Cancel","Cust_Add_Select","Listbox_Account_Tgl", _
+Private Const varShp As Variant = _Array("Listbox_Pane", _"Multiuse_Listbox", _
+    "Listbox_Cancel","Listbox_Select","Listbox_Account_Tgl", _
     "Listbox_Holder_Tgl")
 
 
@@ -21,10 +21,8 @@ Private Sub Initialize()
     Utility.Show(varShp)
 
     'Set listbox modifier buttons to this module macro
-    With Sheets("Control Panel")
-        .Shapes("Listbox_Account_Tgl").OnAction = "btnViewByAccount"
-        .Shapes("Listbox_Holder_Tgl").OnAction = "Utility.UpdateListboxAss"
-    End With
+    Sheets("Control Panel").Shapes("Listbox_Account_Tgl").OnAction = _
+        "btnViewByAccount"
 End Sub
 
 

@@ -33,7 +33,7 @@ End Function
 
 '*******************************************************************************
 'Query programs tab. Parameter is the user's network ID. Only pulls assigned
-'customers. Returns open recordset
+'customers. Returns open recordset.
 '*******************************************************************************
 Function GetExpPrograms(strCst As String) As ADODB.Recordset
 
