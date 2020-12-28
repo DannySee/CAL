@@ -146,7 +146,6 @@ Function GetCst(blMyCst As Boolean) As Variant
     Dim strVal As String
     Dim strOp As String
 
-
     'Establish connection to SQL server
     cnn.Open _
         "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
@@ -274,4 +273,37 @@ Public Function GetXL(strSht As String) As Variant
 
     'Return multidimensional array of Excel data (from passthrough sheet)
     If Not rst.EOF Then GetXL = rst.GetRows
+End Function
+
+
+'*******************************************************************************
+'Pull all accoiate names (excluding user's name).
+'*******************************************************************************
+Function GetAssName() As Variant
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim strVal As String
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Establish user's network ID
+    netID = Environ("Username")
+
+    'Query customer ID from customer name
+    rst.Open "SELECT DISTINCT TIER_1 AS ASS " _
+        & "FROM UL_Account_Ass " _
+        & "WHERE TIER_1 <> '" & netID & "'", cnn
+
+    'Assemble string from query results
+    Do While rst.EOF = False
+        strVal = Append(strVal & "," & rst.Fields("ASS").Value)
+        rst.MoveNext
+    Loop
+
+    'Return Array of associate names
+    GetAssName = Split(strVal, ",")
 End Function

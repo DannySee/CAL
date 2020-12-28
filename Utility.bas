@@ -190,13 +190,20 @@ Sub AddDropDwns()
     Dim dropDwns As Variant
     Dim myCst As Variant
     Dim othCst As Variant
+    Dim othAss As Variant
+    Dim varLst As Variant
     Dim iRow As Integer
     Dim iCol As Integer
+    Dim l As Integer
 
     'Get multidimensional arrays of drop down database
     dropDwns = Pull.GetDropDwns
     myCst = Pull.GetCst(True)
     othCst = Pull.GetCst(False)
+    othAss = Pull.GetAss
+
+    'Setup array of specific dropdown tasks
+    varLst = Array(myCst, othCst, othAss)
 
     'Clear old Dropdown values
     Sheets("DropDowns").Cells.Value = ""
@@ -213,18 +220,19 @@ Sub AddDropDwns()
         Next
     Next
 
-    'Loop through each element of assigned customer array
-    For i = 0 To UBound(myCst)
+    'Loop through array of each drop down category
+    For i = 0 To UBound(varLst)
 
-        'Paste assigned customers in list format
-        Sheets("DropDowns").Cells(i+1, 8).Value = myCst(i)
-    Next
+        'Loop through each element of assigned customer array
+        For f = 0 To UBound(varLst(i))
 
-    'Loop through each element of unassigned customer array
-    For i = 0 To UBound(othCst)
+            'Set column and row index on dropdown sheet
+            iCol = f + 8
+            iRow = f + 1
 
-        'Paste unassigned customers in list format
-        Sheets("DropDowns").Cells(i+1, 9).Value = othCst(i)
+            'Paste assigned customers in list format
+            Sheets("DropDowns").Cells(iRow, iCol).Value = varLst(i)(f)
+        Next
     Next
 End Sub
 
