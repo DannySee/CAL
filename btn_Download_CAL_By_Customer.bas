@@ -1,6 +1,6 @@
 Attribute VB_Name = "btn_Download_CAL_By_Customer"
 
-'Declare private module constants TESTING
+'Declare private module constants TESTING2
 Private Const varShp As Variant = _Array("Cust_Add_Pane", _"Multiuse_Listbox", _
     "Cust_Add_Cancel","Cust_Add_Select","Listbox_Account_Tgl","Listbox_All", _
     "Listbox_Holder_Tgl")
