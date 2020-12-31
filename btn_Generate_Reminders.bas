@@ -24,10 +24,30 @@ Private Const strFooter As String = _
 
 
 '*******************************************************************************
+'Show all utility elements, update and resize listbox.
+'*******************************************************************************
+Private Sub Initialize()
+
+    'Hide any visible shapes
+    Utility.ClearShapes
+
+    'Set default listbox view
+    btnViewByAccount
+
+    'Show utility elements
+    Utility.Show(varShp)
+
+    'Set listbox modifier buttons to this module macro
+    Sheets("Control Panel").Shapes("Listbox_Account_Tgl").OnAction = _
+        "btnViewByAccount"
+End Sub
+
+
+'*******************************************************************************
 'Send reminder emails to DPM hotline including email body w/ formatted list of
 'expiring agreements & attached customer friendly CAL form
 '*******************************************************************************
-Sub Initialize()
+Sub btnSelect()
 
     'Declare sub variables
     Dim wb As Workbook
@@ -42,8 +62,8 @@ Sub Initialize()
     'Get folder path from user selection
     strPth = Utility.SelectFolder
 
-    'Get array of my customer names
-    varCst = Pull.GetCst(True)
+    'Get array of selected customer(s)
+    varCst = Utility.GetSelection
 
     'Alert user and exit sub if no assigned customers/selected folder
     If Not IsEmpty(varCst) And strPth <> "" Then
@@ -73,4 +93,24 @@ Sub Initialize()
             End If
         Next
     End If
+End Sub
+
+
+'*******************************************************************************
+'Clear utility shapes from Control Panel.
+'*******************************************************************************
+Private Sub btnCancel()
+
+    'Clear utility shapes from Control Panel
+    Utility.ClearShapes
+End Sub
+
+
+'*******************************************************************************
+'Update multiuse listbox with (unassigned) customer list
+'*******************************************************************************
+Private Sub btnViewByAccount()
+
+    'Clear utility shapes from Control Panel
+    Utility.UpdateListboxCst(True)
 End Sub

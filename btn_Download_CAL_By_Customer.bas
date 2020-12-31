@@ -20,10 +20,8 @@ Private Sub Initialize()
     Utility.Show(varShp)
 
     'Set listbox modifier buttons to this module macro
-    With Sheets("Control Panel")
-        .Shapes("Listbox_Account_Tgl").OnAction = "btnViewByAccount"
-        All*********************************************************************
-    End With
+    Sheets("Control Panel").Shapes("Listbox_Account_Tgl").OnAction = _
+        "btnViewByAccount"
 End Sub
 
 
@@ -69,6 +67,7 @@ Private Sub btnCancel()
     'Clear utility shapes from Control Panel
     Utility.ClearShapes
 End Sub
+
 
 '*******************************************************************************
 'Update multiuse listbox with (unassigned) customer list
