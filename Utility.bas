@@ -504,9 +504,33 @@ End Sub
 '*******************************************************************************
 'Select all elements from multiuse listbox
 '*******************************************************************************
-Sub UpdateListboxAll(strSubject As String, strTxt As String, strFile As String)
+Sub UpdateListboxAll()
 
+    'Declare sub variables
+    Dim blToggle As Boolean
 
+    'Actavte object shape
+    With Sheets("Control Panel").Shapes("Listbox_All_Tgl")
+
+        'If button is toggled on
+        If .Fill.ForeColor = RGB(64, 64, 64) Then
+            .Fill.ForeColor.RGB = RGB(89, 89, 89)
+
+        'If button is toggled off
+        Else
+            .Fill.ForeColor.RGB = RGB(64, 64, 64)
+            blToggle = True
+        End If
+    End With
+
+    'Loop through all dropdowns55to create string
+    With Sheets("Control Panel").Multiuse_Listbox
+
+        'Loop through list and toggle on/off according to boolean operator
+        For i = 0 To .ListCount - 1
+            .Selected(i) = blToggle
+        Next
+    End With
 End Sub
 
 
