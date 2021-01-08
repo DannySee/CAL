@@ -51,13 +51,11 @@ Private Sub Pull_Unassigned_Customers_Select()
         oCst.Push
         oDevLds.Push
 
-        'Add/remove customers from DropDowns
+        'Add/remove customers from DropDowns sheet
         Utility.ReviseDropDwns(varCst)
 
-        'Format sheets and insert updated server data
-        Utility.ShtRefresh(oPrgms, Pull.GetPrograms(strCst, "*"))
-        Utility.ShtRefresh(oCst, Pull.GetCstProfile(strCst, "*"))
-        Utility.ShtRefresh(oDevLds, Pull.GetDevLds(strCst, "*"))
+        'Populate CAL sheets with refreshed data
+        Utility.PopulatePages
 
         'Save all sheet data set to static dictionary
         Set tempDct = oPrgms.GetSaveData(True)
@@ -65,7 +63,7 @@ Private Sub Pull_Unassigned_Customers_Select()
         Set tempDct = oDev.GetSaveData(True)
 
         'Clear utility shapes
-        Utility.btnCancel
+        Utility.ClearShapes
 
     'If no customers were selected from list
     Else

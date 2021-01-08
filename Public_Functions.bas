@@ -4,7 +4,6 @@ Attribute VB_Name = "Custom_Functions"
 Public oPrgms As New clsPrograms
 Public oCst As new clsCustProfile
 Public oDev As New clsDevLoads
-Public netID As String
 Public iLRow As Long
 Public iLCol As Integer
 Public i As Integer
@@ -158,4 +157,24 @@ Public Function NextMonth() As String
 
     'Return month and year
     NextMonth = strMonth & " " & iYear
+End Function
+
+
+'*******************************************************************************
+'Returns user's network ID
+'*******************************************************************************
+Public Function GetID() As String
+
+    'Declare function variables
+    GetID = Environ("Username")
+End Function
+
+
+'*******************************************************************************
+'Returns user's name
+'*******************************************************************************
+Public Function GetName() As String
+
+    'Declare function variables
+    GetName = Application.Username
 End Function

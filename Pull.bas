@@ -23,11 +23,37 @@ Function GetPrograms(strCst As String, strFlds As String) As ADODB.Recordset
             & "FROM UL_Programs " _
             & "GROUP BY PROGRAM_ID) AS O " _
         & "ON PROGRAM_ID = O.PID AND END_DATE = O.ED " _
-        & "WHERE CUSTOMER IN (" & strCst & ")"
+        & "WHERE CUSTOMER IN (" & strCst & ") " _
         & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
 
     'Return query results
     GetPrograms = rst
+End Function
+
+
+'*******************************************************************************
+'Query programs tab. Parameter is the user's network ID. Only pulls assigned
+'customers. Returns open recordset
+'*******************************************************************************
+Function GetDelPrograms(strCst As String) As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Query deleted records for assigned customers
+    rst.Open "SELECT * " _
+        & "FROM UL_Deleted_Programs " _
+        & "WHERE CUSTOMER IN (" & strCst & ")" _
+        & "OR DEL_USER = '" & GetName & "' " _
+        & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
+
+    'Return query results
+    GetDelPrograms = rst
 End Function
 
 
@@ -157,13 +183,10 @@ Function GetCst(blMyCst As Boolean) As Variant
         strOp = "="
     End If
 
-    'Set variable to current user Network ID
-    netID = Environ("Username")
-
     'Query all assigned customer names
     rst.Open "SELECT CUSTOMER_NAME AS CST " _
         & "FROM UL_ACCOUNT_ASS " _
-        & "WHERE T1_ID " & strOp & " '" & netID & "' " _
+        & "WHERE T1_ID " & strOp & " '" & GetID & "' " _
         & "ORDER BY CUSTOMER_NAME", cnn
 
     'Assemble string from query results
@@ -290,13 +313,10 @@ Function GetAssName() As Variant
     cnn.Open _
         "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
 
-    'Establish user's network ID
-    netID = Environ("Username")
-
     'Query customer ID from customer name
     rst.Open "SELECT DISTINCT TIER_1 AS ASS " _
         & "FROM UL_Account_Ass " _
-        & "WHERE TIER_1 <> '" & netID & "'", cnn
+        & "WHERE TIER_1 <> '" & GetID & "'", cnn
 
     'Assemble string from query results
     Do While rst.EOF = False

@@ -43,6 +43,25 @@ End Sub
 
 
 '*******************************************************************************
+'Send help message to server.
+'*******************************************************************************
+Sub SendHelp(str As String)
+
+    'Declare sub variables
+    Dim cnn As New ADODB.Connecton
+
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
+
+    'Insert help message into SQL Server table
+    cnn.Execute("INSERT INTO UL_Help " _
+        & "VALUES('" & GetID & "', '" & GetName & "', '" & str & "', '" _
+        & Now() & "')")
+End Sub
+
+
+'*******************************************************************************
 'Executes SQL Insert statement to CAL database. Returns recordset of gutter
 'fields if inserted lines i.e. Primary Key, Customer ID etc
 '*******************************************************************************

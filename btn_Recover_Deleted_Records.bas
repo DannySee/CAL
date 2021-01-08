@@ -1,88 +1,77 @@
 Attribute VB_Name = "btn_Recover_Deleted_Records"
 
-
-'*******************************************************************************
-'Show all utility elemenst, pdate and resize listbox.
-'*******************************************************************************
-Sub Initialize()
-
-    'Hide any visible shapes
-    Utility.ClearShapes
-
-    'Update listbox
-    Utility.UpdateListbox(False)
-
-    'Show utility elements
-    Utility.Show(oBtnPull.GetShapes)
-
-End Sub
+'Declare private module constants
+Private Const varSht As Variant = _Array("Recover Programs", _
+    "Recover Cust Profile", "Recover Deviation Loads")
 
 
 '*******************************************************************************
-'Pull in selected customer data. Update dropwdowns, Programs, Customer Profiel,
-'and Deviation Loads sheets.
+'Show all utility elements and popluate data
 '*******************************************************************************
-Sub SelectCst()
+Private Sub Recover_Deleted_Initialize()
 
-    'Declare sub variables
-    Dim tempDct As New Scripting.Dictionary
-    Dim varCst As Variant
+    'Declare module variables
     Dim strCst As String
 
-    'Get array of selected customer(s)
-    varCst = Utility.GetSelection
+    'Get String of my customer names
+    strCst = GetStr(Pull.GetCst(True), True)
 
-    'Alert user and exit sub if no customers were selected
-    If IsEmpty(varCst) Then
-        msgbox "You must select at least one customer."
-        Goto NoCst
-    End If
+    'Clear data from sheets. Parameters: utility sheets + header row
+    Utility.ClearShts(varSht, 3)
 
-    'Get string of selected customers (comma and quote delimited)
-    strCst = GetStr(varCst, True)
+    'Show utility sheets
+    Utility.ShowSheets(varSht)
 
-    'Update/insert all new recordset
-    oPrgms.Push
-    oCst.Push
-    oDevLds.Push
-
-    'Add/remove customers from DropDowns
-    Format.ReviseDropDwns(varCst)
-
-    'Establish connection to SQL server
-    cnn.Open _
-        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+    'Hide all other Sheets (Sheets that do not contain key word Recover)
+    Utility.HideSheets("Recover")
 
     'Format sheets and insert updated server data
-    Format.ShtRefresh(oPrgms, Pull.GetPrograms(strCst))
-    Format.ShtRefresh(oCst, Pull.GetCstProfile(strCst))
-    Format.ShtRefresh(oDevLds, Pull.GetDevLds(strCst))
+    Utility.ShtRefresh("Recover Deleted", Pull.GetDelPrograms(strCst))
+    Utility.ShtRefresh("Recover Cust Profile", Pull.GetDelCst(strCst))
+    Utility.ShtRefresh("recover Deviation Loads", Pull.GetDelDev(strCst))
 
-    'Close connection
-    cnn.Close
-
-    'Save all sheet data set to static dictionary
-    Set tempDct = oPrgms.GetSaveData(True)
-    Set tempDct = oCst.GetSaveData(True)
-    Set tempDct = oDev.GetSaveData(True)
-
-    'Clear utility shapes
-    Utility.ClearShapes
-
-'Label to alert user of missing selection
-NoCst:
-
-    'Free objects
-    Set cnn = Nothing
-    Set rst = Nothing
+    '
 End Sub
 
 
 '*******************************************************************************
-'Clear utility shapes from Control Panel.
+'Send help message to server.
 '*******************************************************************************
-Sub Cancel()
+Sub Help_Send()
 
-    'Clear utility shapes from Control Panel
+    'Declare variables
+    Dim strFields As String
+    Dim strHelp As string
+
+    'Get string from help box
+    strHelp = ActiveSheet.TextBoxes("Help_Body").Text
+
+    'Ensure there is data to parse
+    If strHelp <> "" Then
+
+        'Send message to database
+        Push.SendHelp(strHelp)
+
+        'Complete message
+        MsgBox "Message sent!"
+
+        'Clear all shapes from Control Panel
+        Utility.ClearShapes
+
+    'No message to Send
+    Else
+
+        'Alert user they did not input a message
+        msgbox "No message sent."
+    End If
+End Sub
+
+
+'*******************************************************************************
+'Hide help window
+'*******************************************************************************
+Sub Help_Cancel()
+
+    'Clear all shapes from Control Panel
     Utility.ClearShapes
 End Sub

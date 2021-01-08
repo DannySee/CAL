@@ -33,15 +33,10 @@ End Sub
 
 
 '*******************************************************************************
-'Clear data from 3 data pages (Programs, Customer Profile & Deviation Loads).
+'Clear data from sheets - delete all sheet names in the varSht parameter using
+'iRow as the starting position.
 '*******************************************************************************
-Sub ClearShts()
-
-    'Declare variables
-    Dim varSht As Variant
-
-    'Setup array of all Sheets
-    varSht = Array("Programs","Customer Profile","Deviation Loads")
+Sub ClearShts(varSht As Variant, iRow As Integer)
 
     'Loop through Sheets
     For Each sht In varSht
@@ -55,7 +50,7 @@ Sub ClearShts()
         'Focus on sheet and clear all data
         With Sheets(sht)
             .ShowAll
-            .Range("A2:A" & iLRow).EntireRow.Delete
+            .Range("A" & iRow & ":A" & iLRow).EntireRow.Delete
         End With
 
         'Lock sheets
@@ -65,19 +60,39 @@ End Sub
 
 
 '*******************************************************************************
+'Fills main three CAL sheets with appropriate data & formats accordingly
+'*******************************************************************************
+Sub PopulatePages(strSht As String)
+
+    'Format sheets and insert updated server data
+    Utility.ShtRefresh("Programs", Pull.GetPrograms(strCst, "*"))
+    Utility.ShtRefresh("Customer Profile", Pull.GetCstProfile(strCst, "*"))
+    Utility.ShtRefresh("Deviation Loads" Pull.GetDevLds(strCst, "*"))
+
+    'Add conditional formatting to programs tab
+    Utility.AddCondFormatting
+
+    'Add data validation (drop down options)
+    oPgrms.AddDataValidation
+    oCst.AddDataValidation
+    oDev.AddDataValidation
+End Sub
+
+
+'*******************************************************************************
 'Delete old sheet detail and paste new. Parameters are sheet name and open
 'recordset.
 '*******************************************************************************
-Sub ShtRefresh(obj As Object, upd As ADODB.Recordset)
+Sub ShtRefresh(strSht As String, upd As ADODB.Recordset)
 
     'Unlock sheet
-    ShtUnlock(obj.Sht)
+    ShtUnlock(strSht)
 
     'Get last row of sheet
-    iLRow = LastRow(obj.Sht) + 1
+    iLRow = LastRow(strSht) + 1
 
     'Clear previous sheet content and paste new
-    With Sheets(obj.Sht)
+    With Sheets(strSht)
         .ShowAll
         .Cells(iLRow, 1).CopyFromRecordset upd
     End With
@@ -86,7 +101,7 @@ Sub ShtRefresh(obj As Object, upd As ADODB.Recordset)
     AddFormat(obj)
 
     'Lock sheet
-    ShtLock(obj.Sht)
+    ShtLock(strSht)
 
     'Close recordset
     upd.Close
@@ -97,14 +112,14 @@ End Sub
 'Format CAL sheet. Resize rows, correct borders, lock white space etc.
 'Parameter is the sheet to be formatted.
 '*******************************************************************************
-Sub AddFormat(obj As Object)
+Sub AddFormat(strSht As String)
 
     'Activate sheet
-    With Sheets(obj.Sht)
+    With Sheets(strSht)
 
         'Get last row and last COLUMN_NUM
-        iLRow = LastRow(obj.Sht)
-        iLCol = LastCol(obj.Sht)
+        iLRow = LastRow(strSht)
+        iLCol = LastCol(strSht)
 
         'Format Columns (width/height)
         .Columns.ColumnWidth = 100
@@ -130,14 +145,6 @@ Sub AddFormat(obj As Object)
         .Range(.Cells(iLRow + 1, 1), _
             .Cells(.Rows.Count, 1)).EntireRow.Locked = True
     End With
-
-    'Add data validation (drop down options)
-    obj.AddDataValidation
-
-    'If active sheet is Programs tab then add end date condition formatting
-    If obj.Sht = "Programs" Then AddCondFormatting( _
-        oPrgms.ColIndex("START_DATE") + 1, _
-        oPrgms.ColIndex("END_DATE") + 1)
 End Sub
 
 
@@ -145,14 +152,20 @@ End Sub
 'Add conditional formatting to the Programs tab. Weekly programs are highlighted
 'green and programs expiring EOM are highlighted red.
 '*******************************************************************************
-Sub AddCondFormatting(iStrt As Integer, iEnd As Integer)
+Sub AddCondFormatting()
 
     'Declare sub variables
     Dim rngFrmt As Range
     Dim strDteRng As String
+    Dim iStrt As Integer
+    Dim iEnd As Integer
 
     'Get last row of sheet
     iLRow = LastRow("Programs")
+
+    'Get column Location
+    iStrt = oPrgms.ColIndex("START_DATE") + 1
+    iEnd = oPrgms.ColIndex("END_DATE") + 1
 
     'Activate Programs tab
     With Sheets("Programs")
@@ -280,7 +293,7 @@ End Sub
 'Show all elements of selected Control Panel utility. Variant array includes
 'all shapes to unhide.
 '*******************************************************************************
-Sub Show(varShapes As Variant)
+Sub ShowShapes(varShapes As Variant)
 
     'Focus on Control Panel sheet
     With Sheets("Control Panel")
@@ -292,6 +305,21 @@ Sub Show(varShapes As Variant)
             .Shapes(shp).Visible = True
         Next
     End With
+End Sub
+
+
+'*******************************************************************************
+'Show all elements of selected Control Panel utility. Variant array includes
+'all shapes to unhide.
+'*******************************************************************************
+Sub ShowSheets(varSht As Variant)
+
+    'Loop through all shapes in object library
+    For Each sht In varSht
+
+        'Unhide sheet
+        Sheets(sht).Visible = True
+    Next
 End Sub
 
 
@@ -549,4 +577,35 @@ Sub ResetToggle()
         .Shapes("Listbox_Account_Tgl").Fill.ForeColor.RGB = RGB(89,89,89)
         .Shapes("Listbox_All_Tgl").Fill.ForeColor.RGB = RGB(89,89,89)
     End With
+End Sub
+
+
+'*******************************************************************************
+'Hide any shapes on Control Panel sheet that are not constant UI elements.
+'*******************************************************************************
+Sub ClearShapes()
+
+    'Loop through each shape in Control panel
+    For Each shp In Sheets("Control Panel").Shapes
+
+        'Hide shape if it is not a constant UI element
+        If InStr(shp.Name, "Const") = 0 Then shp.Visible = False
+    Next
+End Sub
+
+
+'*******************************************************************************
+'Show sheets that contain passthrough keyword.
+'*******************************************************************************
+Sub HideSheets(Sht As String)
+
+    'Declare sub variables
+    Dim ws As Worksheet
+
+    'Loop through each sheet in workbook
+    For Each ws In Worksheets
+
+        'Hide sheet if it does not contain passthrough keyword
+        If InStr(ws.Name, sht) = 0 Then ws.Visible = False
+    Next
 End Sub

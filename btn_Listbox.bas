@@ -75,14 +75,10 @@ End Sub
 
 
 '*******************************************************************************
-'Hide any shapes on Control Panel sheetthat are not constant UI elements.
+'Hide any shapes on Control Panel sheet that are not constant UI elements.
 '*******************************************************************************
 Sub Cancel_Listbox_Initialize()
 
-    'Loop through each shape in Control panel
-    For Each shp In Sheets("Control Panel").Shapes
-
-        'Hide shape if it is not a constant UI element
-        If InStr(shp.Name, "Const") = 0 Then shp.Visible = False
-    Next
+    'Clear all shapes from Control Panel
+    Utility.ClearShapes
 End Sub

@@ -1,78 +1,61 @@
 Attribute VB_Name = "btn_Help"
 
+'Declare private module constants TESTING3
+Private Const varShp As Variant = _Array("Help_Label", "Help_Body", _
+    "Help_Send","Help_Cancel","Help_Pane")
+
 
 '*******************************************************************************
-'Show all utility elemenst, pdate and resize listbox.
+'Show all utility elements.
 '*******************************************************************************
-Sub Help_Initialize()
+Private Sub Help_Initialize()
 
     'Hide any visible shapes
     Utility.ClearShapes
 
-    'Update listbox
-    Utility.UpdateListbox(False)
-
     'Show utility elements
-    Utility.Show(oBtnPull.GetShapes)
-
+    Utility.Show(varShp)
 End Sub
 
 
 '*******************************************************************************
-'Pull in selected customer data. Update dropwdowns, Programs, Customer Profiel,
-'and Deviation Loads sheets.
+'Send help message to server.
 '*******************************************************************************
-Sub Help_Select()
+Sub Help_Send()
 
-    'Declare sub variables
-    Dim tempDct As New Scripting.Dictionary
-    Dim varCst As Variant
-    Dim strCst As String
+    'Declare variables
+    Dim strFields As String
+    Dim strHelp As string
 
-    'Get array of selected customer(s)
-    varCst = Utility.GetSelection
+    'Get string from help box
+    strHelp = ActiveSheet.TextBoxes("Help_Body").Text
 
-    'Alert user and exit sub if no customers were selected
-    If IsEmpty(varCst) Then
-        msgbox "You must select at least one customer."
-        Goto NoCst
+    'Ensure there is data to parse
+    If strHelp <> "" Then
+
+        'Send message to database
+        Push.SendHelp(strHelp)
+
+        'Complete message
+        MsgBox "Message sent!"
+
+        'Clear all shapes from Control Panel
+        Utility.ClearShapes
+
+    'No message to Send
+    Else
+
+        'Alert user they did not input a message
+        msgbox "No message sent."
     End If
+End Sub
 
-    'Get string of selected customers (comma and quote delimited)
-    strCst = GetStr(varCst, True)
 
-    'Update/insert all new recordset
-    oPrgms.Push
-    oCst.Push
-    oDevLds.Push
+'*******************************************************************************
+'Hide help window
+'*******************************************************************************
+Sub Help_Cancel()
 
-    'Add/remove customers from DropDowns
-    Format.ReviseDropDwns(varCst)
-
-    'Establish connection to SQL server
-    cnn.Open _
-        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
-
-    'Format sheets and insert updated server data
-    Format.ShtRefresh(oPrgms, Pull.GetPrograms(strCst))
-    Format.ShtRefresh(oCst, Pull.GetCstProfile(strCst))
-    Format.ShtRefresh(oDevLds, Pull.GetDevLds(strCst))
-
-    'Close connection
-    cnn.Close
-
-    'Save all sheet data set to static dictionary
-    Set tempDct = oPrgms.GetSaveData(True)
-    Set tempDct = oCst.GetSaveData(True)
-    Set tempDct = oDev.GetSaveData(True)
-
-    'Clear utility shapes
-    Utility.btnCancel
-
-'Label to alert user of missing selection
-NoCst:
-
-    'Free objects
-    Set cnn = Nothing
-    Set rst = Nothing
+    'Clear all shapes from Control Panel
+    Utility.ClearShapes
 End Sub
