@@ -5,7 +5,7 @@ Attribute VB_Name = "btn_Refresh_Data".
 'Get fresh data directly from server. Delete old records, replace with new &
 'format accordingly. Runs across main tabs. Test final
 '*******************************************************************************
-Sub Initialize()
+Sub Refresh_Data_Initialize()
 
     'Declare sub variables
     Dim tempDct As New Scripting.Dictionary

@@ -262,20 +262,6 @@ End Sub
 
 
 '*******************************************************************************
-'Hide any shapes on Control Panel sheetthat are not constant UI elements.
-'*******************************************************************************
-Sub ClearShapes()
-
-    'Loop through each shape in Control panel
-    For Each shp In Sheets("Control Panel").Shapes
-
-        'Hide shape if it is not a constant UI element
-        If InStr(shp.Name, "Const") = 0 Then shp.Visible = False
-    Next
-End Sub
-
-
-'*******************************************************************************
 'Resize multiuse listbox to help accomodate different screen aspect ratios.
 '*******************************************************************************
 Sub ResizeListbox()
@@ -328,7 +314,7 @@ Function GetSelection() As Variant
     If strCst <> "" Then
 
         'Return a list of customers if slection is by account holder, not customer
-        If ToggleAssociate Then
+        If ToggleBtn("Listbox_Account_Tgl") Then
             strCst = GetStr(Split(strCst, ","), True)
             strCst = Pull.GetAssignments(strCst))
         End If
@@ -502,43 +488,10 @@ End Sub
 
 
 '*******************************************************************************
-'Select all elements from multiuse listbox
-'*******************************************************************************
-Sub UpdateListboxAll()
-
-    'Declare sub variables
-    Dim blToggle As Boolean
-
-    'Actavte object shape
-    With Sheets("Control Panel").Shapes("Listbox_All_Tgl")
-
-        'If button is toggled on
-        If .Fill.ForeColor = RGB(64, 64, 64) Then
-            .Fill.ForeColor.RGB = RGB(89, 89, 89)
-
-        'If button is toggled off
-        Else
-            .Fill.ForeColor.RGB = RGB(64, 64, 64)
-            blToggle = True
-        End If
-    End With
-
-    'Loop through all dropdowns55to create string
-    With Sheets("Control Panel").Multiuse_Listbox
-
-        'Loop through list and toggle on/off according to boolean operator
-        For i = 0 To .ListCount - 1
-            .Selected(i) = blToggle
-        Next
-    End With
-End Sub
-
-
-'*******************************************************************************
 'Update multiuse listbox with list of customers. Boolean operator indicates
 'if listbox should conatain assigned customers or unassigned customers.
 '*******************************************************************************
-Sub UpdateListboxCst(blMyCst As Boolean)
+Sub ListboxByCst(blMyCst As Boolean)
 
     'Focus on dropdowns sheet
     With Sheets("DropDowns")
@@ -564,35 +517,8 @@ Sub UpdateListboxCst(blMyCst As Boolean)
     End With
 
     'Highlight button
-    ResetListToggle
-    Sheets("Control Panel").Shapes("Listbox_Account_Tgl").Interior.Color = _
-        RGB(64,64,64)
-
-    'Correct listbox sizing
-    ResizeListbox
-End Sub
-
-
-'*******************************************************************************
-'Update multiuse listbox with list of account holders. Boolean operator
-'indicates if listbox should conatain assigned/unassigned customers.
-'*This function will only work for other user's account assignments
-'*******************************************************************************
-Sub UpdateListboxAss()
-
-    'Focus on dropdowns sheet
-    With Sheets("DropDowns")
-
-        'Find last row of Dropowns sheet (custom column)
-        iLRow = Cells(.Rows.Count, "J").End(xlUp).Row + 1
-
-        'Update customer list be just unassigned customers
-        Multiuse_Listbox.List = .Range("J1:J" & iLRow).Value
-    End With
-
-    'Update toggle color
-    ResetListToggle
-    Sheets("Control Panel").Shapes("Listbox_Holder_Tgl").Interior.Color = _
+    ResetToggle
+    Sheets("Control Panel").Shapes("Listbox_Account_Tgl").Fill.ForeColor.RGB = _
         RGB(64,64,64)
 
     'Correct listbox sizing
@@ -604,23 +530,23 @@ End Sub
 'Returns Boolean value to indicate if multiuse listbox selection was made with
 'containing customer or account holder.
 '*******************************************************************************
-Function ToggleAssociate() As Boolean
+Function IsToggle(strShp As String) As Boolean
 
     'Return true if associate name was selected
-    If Sheets("Control Panel").Shapes("Listbox_Account_Tgl").Interior.Color = _
-        RGB(64,64,64) Then IsAssociate = True
+    If Sheets("Control Panel").Shapes(strShp).Fill.ForeColor = _
+        RGB(64,64,64) Then IsToggle = True
 End Sub
 
 
 '*******************************************************************************
 'Reset listbox toggle buttons to default color
 '*******************************************************************************
-Sub ResetListToggle()
+Sub ResetToggle()
 
     'Set all toggle
     With Sheets("Control Panel")
-        .Shapes("Listbox_Holder_Tgl").Interior.Color = RGB(89,89,89)
-        .Shapes("Listbox_Account_Tgl").Interior.Color = RGB(89,89,89)
-        .Shapes("Listbox_All_Tgl").Interior.Color = RGB(89,89,89)
+        .Shapes("Listbox_Holder_Tgl").Fill.ForeColor.RGB = RGB(89,89,89)
+        .Shapes("Listbox_Account_Tgl").Fill.ForeColor.RGB = RGB(89,89,89)
+        .Shapes("Listbox_All_Tgl").Fill.ForeColor.RGB = RGB(89,89,89)
     End With
 End Sub

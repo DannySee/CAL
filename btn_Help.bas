@@ -4,7 +4,7 @@ Attribute VB_Name = "btn_Help"
 '*******************************************************************************
 'Show all utility elemenst, pdate and resize listbox.
 '*******************************************************************************
-Sub Initialize()
+Sub Help_Initialize()
 
     'Hide any visible shapes
     Utility.ClearShapes
@@ -22,7 +22,7 @@ End Sub
 'Pull in selected customer data. Update dropwdowns, Programs, Customer Profiel,
 'and Deviation Loads sheets.
 '*******************************************************************************
-Sub SelectCst()
+Sub Help_Select()
 
     'Declare sub variables
     Dim tempDct As New Scripting.Dictionary
@@ -67,7 +67,7 @@ Sub SelectCst()
     Set tempDct = oDev.GetSaveData(True)
 
     'Clear utility shapes
-    Utility.ClearShapes
+    Utility.btnCancel
 
 'Label to alert user of missing selection
 NoCst:
@@ -75,14 +75,4 @@ NoCst:
     'Free objects
     Set cnn = Nothing
     Set rst = Nothing
-End Sub
-
-
-'*******************************************************************************
-'Clear utility shapes from Control Panel.
-'*******************************************************************************
-Sub Cancel()
-
-    'Clear utility shapes from Control Panel
-    Utility.ClearShapes
 End Sub

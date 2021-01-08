@@ -3,26 +3,26 @@ Attribute VB_Name = "btn_Pull_Unassigned_Customers"
 'Declare private module constants
 Private Const varShp As Variant = _Array("Listbox_Pane", _"Multiuse_Listbox", _
     "Listbox_Cancel","Listbox_Select","Listbox_Account_Tgl", _
-    "Listbox_Holder_Tgl")
+    "Listbox_Associate_Tgl")
 
 
 '*******************************************************************************
 'Show all utility elements, update and resize listbox.
 '*******************************************************************************
-Private Sub Initialize()
+Private Sub Pull_Unassigned_Customers_Initialize()
 
     'Hide any visible shapes
     Utility.ClearShapes
 
     'Set default listbox view
-    btnViewByAccount
+    Utility.ListboxByCst(False)
 
     'Show utility elements
     Utility.Show(varShp)
 
-    'Set listbox modifier buttons to this module macro
-    Sheets("Control Panel").Shapes("Listbox_Account_Tgl").OnAction = _
-        "btnViewByAccount"
+    'Assign Select button to correct routine
+    Sheets("Control Panel").Shapes("Listbox_Select").OnAction = _
+        "Pull_Unassigned_Customers_Select"
 End Sub
 
 
@@ -30,7 +30,7 @@ End Sub
 'Pull in selected customer data. Update dropwdowns, Programs, Customer Profiel,
 'and Deviation Loads sheets.
 '*******************************************************************************
-Private Sub btnSelect()
+Private Sub Pull_Unassigned_Customers_Select()
 
     'Declare sub variables
     Dim tempDct As New Scripting.Dictionary
@@ -65,7 +65,7 @@ Private Sub btnSelect()
         Set tempDct = oDev.GetSaveData(True)
 
         'Clear utility shapes
-        Utility.ClearShapes
+        Utility.btnCancel
 
     'If no customers were selected from list
     Else
@@ -73,24 +73,4 @@ Private Sub btnSelect()
         'Alert user and exit sub if no customers were selected
         msgbox "You must make at least one selection."
     End If
-End Sub
-
-
-'*******************************************************************************
-'Clear utility shapes from Control Panel.
-'*******************************************************************************
-Private Sub btnCancel()
-
-    'Clear utility shapes from Control Panel
-    Utility.ClearShapes
-End Sub
-
-
-'*******************************************************************************
-'Update multiuse listbox with (unassigned) customer list
-'*******************************************************************************
-Private Sub btnViewByAccount()
-
-    'Clear utility shapes from Control Panel
-    Utility.UpdateListboxCst(False)
 End Sub

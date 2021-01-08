@@ -1,8 +1,8 @@
 Attribute VB_Name = "btn_Generate_Reminders"
 
 'Declare private module constants
-Private Const varShp As Variant = _Array("Listbox_Pane", _"Multiuse_Listbox", _
-    "Listbox_Cancel","Listbox_Select","Listbox_Account_Tgl","Listbox_All")
+Private Const varShp As Variant = _Array("Listbox_Pane", "Multiuse_Listbox", _
+    "Listbox_Cancel","Listbox_Select","Listbox_All")
 Private Const strHeader As String = _
     "Hello," & vbLf & vbLf & "Please read this notification in its entirety." _
     & vbLf & vbLf & "Our records indicate that we are still missing the " _
@@ -26,20 +26,20 @@ Private Const strFooter As String = _
 '*******************************************************************************
 'Show all utility elements, update and resize listbox.
 '*******************************************************************************
-Private Sub Initialize()
+Private Sub Generate_Reminders_Initialize()
 
     'Hide any visible shapes
     Utility.ClearShapes
 
     'Set default listbox view
-    btnViewByAccount
+    Utility.ListboxByCst(False)
 
     'Show utility elements
     Utility.Show(varShp)
 
-    'Set listbox modifier buttons to this module macro
-    Sheets("Control Panel").Shapes("Listbox_Account_Tgl").OnAction = _
-        "btnViewByAccount"
+    'Assign Select button to correct routine
+    Sheets("Control Panel").Shapes("Listbox_Select").OnAction = _
+        "Generate_Reminders_Select"
 End Sub
 
 
@@ -47,7 +47,7 @@ End Sub
 'Send reminder emails to DPM hotline including email body w/ formatted list of
 'expiring agreements & attached customer friendly CAL form
 '*******************************************************************************
-Sub btnSelect()
+Sub Generate_Reminders_Select()
 
     'Declare sub variables
     Dim wb As Workbook
@@ -92,25 +92,14 @@ Sub btnSelect()
                 SendReminder(strHeader, strTxt, strFile)
             End If
         Next
+
+        'Clear utility shapes
+        Utility.btnCancel
+
+    'If no customers were selected from list
+    Else
+
+        'Alert user and exit sub if no customers were selected
+        msgbox "You must make at least one selection."
     End If
-End Sub
-
-
-'*******************************************************************************
-'Clear utility shapes from Control Panel.
-'*******************************************************************************
-Private Sub btnCancel()
-
-    'Clear utility shapes from Control Panel
-    Utility.ClearShapes
-End Sub
-
-
-'*******************************************************************************
-'Update multiuse listbox with (unassigned) customer list
-'*******************************************************************************
-Private Sub btnViewByAccount()
-
-    'Clear utility shapes from Control Panel
-    Utility.UpdateListboxCst(True)
 End Sub
