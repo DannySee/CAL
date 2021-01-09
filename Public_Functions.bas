@@ -93,7 +93,7 @@ End Function
 'Get comma delimited string from array. blStr indicates if string should also be
 'quote delimited.
 '*******************************************************************************
-Public Function GetStr(upd As Variant, blStr) As String
+Public Function GetStr(var As Variant, blStr) As String
 
     'Declare function variables
     Dim i As Integer
