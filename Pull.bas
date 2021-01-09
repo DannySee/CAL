@@ -109,7 +109,7 @@ Function GetCstProfile(strCst As String) As ADODB.Recordset
         & "ORDER BY CUSTOMER", cnn
 
     'Return query results
-    GetCustProfile = rst
+    GetCstProfile = rst
 End Function
 
 
@@ -134,7 +134,7 @@ Function GetDevLds(strCst As String) As ADODB.Recordset
         & "ORDER BY CUSTOMER, PROGRAM", cnn
 
     'Return query results
-    GetCustProfile = rst
+    GetDevLds = rst
 End Function
 
 
@@ -196,7 +196,37 @@ Function GetCst(blMyCst As Boolean) As Variant
     Loop
 
     'Return Array of assigned customer names
-    GetMyCst = Split(strVal, ",")
+    GetCst = Split(strVal, ",")
+End Function
+
+
+'*******************************************************************************
+'Query customer packet. Parameter is SQL string of customer names. Returns
+'array of customer packets.
+'*******************************************************************************
+Function GetCstPacket(strCst As String) As Variant
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Query all assigned customer names
+    rst.Open "SELECT DISTINCT PACKET AS PKT " _
+        & "FROM UL_Customer_Profile " _
+        & "WHERE CUSTOMER IN ()" & strCst & ")", cnn
+
+    'Assemble string from query results
+    Do While rst.EOF = False
+        strVal = Append(strVal & "," & rst.Fields("PKT").Value)
+        rst.MoveNext
+    Loop
+
+    'Return Array of assigned customer names
+    GetCstPacket = Split(strVal, ",")
 End Function
 
 
@@ -226,7 +256,7 @@ Function GetAssignments(strID As String) As Variant
     Loop
 
     'Return Array of assigned customer names
-    GetMyCst = strVal
+    GetAssignments = strVal
 End Function
 
 
@@ -326,4 +356,135 @@ Function GetAssName() As Variant
 
     'Return Array of associate names
     GetAssName = Split(strVal, ",")
+End Function
+
+
+'*******************************************************************************
+'Return all OpCo sites given list of Packets.
+'*******************************************************************************
+Function GetOpcos(strPacket As String) As Variant
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim iErr As Integer
+    Dim strUid As String
+    Dim strPwd As String
+
+    'Get username and password
+    strUid = get_uid
+    strPwd = get_pwd
+
+    'Connect to OpCo
+    On Error GoTo OpErr
+    cnn.Open "DSN=AS240A;UID=" & strUid & ";PASSWORD=" & strPwd & ";"
+    On Error GoTo 0
+
+    'Query OpCo list for each packet
+    rst.Open "SELECT DISTINCT TRIM(DVPKGS) AS PCKT, TRIM(DVT500) AS OP " _
+        & "FROM SCDBFP10.PMDPDVRF " _
+        & "INNER JOIN (" _
+            & "SELECT DVPKGS AS PACKET, MAX(LENGTH(TRIM(DVT500))) AS LEN " _
+            & "FROM SCDBFP10.PMDPDVRF " _
+            & "WHERE TRIM(DVPKGS) IN (" & strPacket & ") " _
+            & "GROUP BY DVPKGS) " _
+        & "ON DVPKGS = PACKET AND LENGTH(TRIM(DVT500)) = LEN ", cnn
+
+    'Return multidimensional of packet data
+    OpCos = rst.GetRows
+
+    'Exit Function before error handler
+    Exit Function
+
+'Could not connect to OpCo
+OpErr:
+
+    'If catastrophic error
+    If InStr(Err.Description, "Catastrophic") > 0 Then
+        MsgBox "OBDC overload. " & vblf & vblf _
+            & "Please close all open instances of Excel and try again."
+
+    'If invalid password
+    ElseIf iErr < 2 Then
+
+        'Prompt user to enter SUS credentials
+        UserLog.Show
+
+        'Get updated credentials from server
+        strUid = get_uid
+        strPwd = get_pwd
+
+        'Iterate login attempt counter and resume login
+        iErr = iErr + 1
+        Resume
+
+    'All login attempts unsuccessful
+    Else
+        MsgBox "Could not reach OpCo. Please validate you have access to as240a"
+    End If
+End Function
+s
+
+'*******************************************************************************
+'Get associate SUS password
+'*******************************************************************************
+Function get_pwd() As String
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim i       As Integer
+    Dim StrDec  As String
+    Dim strPwd  As String
+    Dim StrKey  As String
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Query uid & password
+    rst.Open "SELECT SUS_PWD, CRED_ID " _
+        & "FROM Login_Cred " _
+        & "WHERE NET_ID = '" & GetID & "'", cnn
+
+    'If records were successfully queried
+    If Not rst.EOF Then
+
+        'save value to string
+        strPwd = rst.Fields("SUS_PWD").value
+        StrKey = rst.Fields("CRED_ID").value
+
+        'Loop through each character in password
+        For i = 1 To Len(strPwd)
+
+            'Decrypt character of password
+            StrDec = StrDec & Chr(Asc(Mid(strPwd, i, 1)) - Mid(StrKey, i, 1))
+        Next
+
+        'Return decryted SUS password
+        get_pwd = strDec
+    End If
+End Function
+
+
+'*******************************************************************************
+'Get associate SUS username
+'*******************************************************************************
+Function get_uid() As String
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+
+    'Establish connection to SQL server
+    cnn.Open _
+        "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;DATABASE=Pricing_Agreements;"
+
+    'Query uid & password
+    rst.Open "SELECT SUS_ID AS ID " _
+        & "FROM Login_Cred " _
+        & "WHERE NET_ID = '" & GetID & "'", cnn
+
+    'If records were successfully queried return SUS ID
+    If Not rst.EOF Then get_uid = rst.Fields("ID").value
 End Function

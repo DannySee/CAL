@@ -57,7 +57,7 @@ Sub Download_CAL_Select()
         Next
 
         'Clear utility shapes
-        Utility.btnCancel
+        Utility.ClearShapes
 
     'If no customers were selected from list
     Else

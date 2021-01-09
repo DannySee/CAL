@@ -1,4 +1,4 @@
-Attribute VB_Name = "Custom_Functions"
+Attribute VB_Name = "Public_Functions"
 
 'Declare public project variables
 Public oPrgms As New clsPrograms
@@ -24,32 +24,6 @@ Public Function Append(val As String, sep As String, val2 As String) As String
         'Return concatenated value and separator
         Append = val & sep & " " & val2
     End If
-End Function
-
-
-'*******************************************************************************
-'Returns a concatenated string in SQL syntax. Parameters are a multidimensional
-'array with Excel data, the row index to be parsed.
-'*******************************************************************************
-Public Function AppendRow(var As Variant, iRow As Integer, iStrt As Integer) _
-    As String
-
-    'Declare function variables
-    Dim strVal As String
-    Dim strRow As String
-
-    'Loop through each column of passthrough array
-    For iCol = iStrt To UBound(var, 1)
-
-        'Assemble SQL insert string
-        strVal = Validate(var(iCol, iRow), iCol, iRow)
-
-        'Assemble array of insert rows
-        strRow = Append(strRow, ",", strVal)
-    Next
-
-    'Return SQL insert string
-    AppendRow = strRow
 End Function
 
 

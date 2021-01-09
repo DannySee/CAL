@@ -395,6 +395,32 @@ End Function
 
 
 '*******************************************************************************
+'Create new sheet (workbook if on CAL workbook) with white formatting.
+'*******************************************************************************
+Sub NewSheet(strName As String)
+
+    'If active workbook is not CAL workbook
+    If Instr(ActiveWorkbook.Name, "CAL") = 0 Then
+
+        'Create new sheet with name
+        Sheets.Add(After:=Sheets(Sheets.Count)).Name = strName
+
+    'If active workbook is CAL workbook
+    Else
+
+        'Create new workbook
+        Workbooks.Add
+
+        'Rename active sheet of new workbook
+        ActiveSheet.Name = strName
+    End If
+
+    'Add blank formatting to workbook
+    Cells.Interior.Color = vbWhite
+End Function
+
+
+'*******************************************************************************
 'Add headers to active workbook with formatting.
 '*******************************************************************************
 Sub AddHeaders(varHeaders As Variant)
@@ -634,3 +660,30 @@ Function GetArchiveKey() As Long
         MsgBox "Please select one row at a time"
     End If
 End Function
+
+
+'*******************************************************************************
+'Parse string into multiple values. Parse strVal into segments of iLen length
+'and paste each segment in list format in column iCol. Include borders in paste
+'*******************************************************************************
+Sub PasteList(strVal As String, iLen, iCol)
+
+    'Declare module variables
+    Dim i As Integer
+
+    'Paste OpCo into list
+    For i = 1 To Len(strVal)
+
+        'Get last row
+        iLRow = Cells(Rows.Count, iCol).End(xlUp).Row + 1
+
+        'Paste string segment in last row
+        Cells(iLRow, iCol) = "'" & Mid(strVal, i, iLen)
+
+        'Iterate loop to next segment
+        i = i + iLen - 1
+    Next
+
+    'Add borders to list
+    AddBorders
+End Sub
