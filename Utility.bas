@@ -687,3 +687,17 @@ Sub PasteList(strVal As String, iLen, iCol)
     'Add borders to list
     AddBorders
 End Sub
+
+
+'*******************************************************************************
+'Paste overlapping customer detail with appropriate detail.
+'*******************************************************************************
+Sub PasteOverlap(upd As ADODB.Recordset)
+
+    'Paste recordset to range A2
+    Range("A2").CopyFromRecordset upd
+
+    'Remove duplicates
+    Columns(1).RemoveDuplicates Columns:=Array(1)
+    Columns(2).RemoveDuplicates Columns:=Array(1)
+End Sub

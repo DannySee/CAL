@@ -391,7 +391,7 @@ Function GetOpcos(strPacket As String) As Variant
         & "ON DVPKGS = PACKET AND LENGTH(TRIM(DVT500)) = LEN ", cnn
 
     'Return multidimensional of packet data
-    OpCos = rst.GetRows
+    GetOpcos = rst.GetRows
 
     'Exit Function before error handler
     Exit Function
@@ -423,7 +423,279 @@ OpErr:
         MsgBox "Could not reach OpCo. Please validate you have access to as240a"
     End If
 End Function
-s
+
+
+'*******************************************************************************
+'Return all overlapping customers/shp tos give two vendor agmts & OpCo
+'*******************************************************************************
+Function GetVaOvCst(str1 As String, str2 As String, strOp As String) _
+    As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim iErr As Integer
+    Dim strUid As String
+    Dim strPwd As String
+
+    'Get username and password
+    strUid = get_uid
+    strPwd = get_pwd
+
+    'Connect to OpCo
+    On Error GoTo OpErr
+    cnn.Open "DSN=AS" & strOp & "A;UID=" & strUid & ";PASSWORD=" & strPwd & ";"
+    On Error GoTo 0
+
+    'VA Query overlapping customer
+    rst.Open "SELECT DISTINCT " _
+        & "TRIM(T2.QWPCSC) || ' ' || TRIM(T2.QWPCSP), TRIM(T2.QWCUNO) " _
+        & "FROM (" _
+            & "SELECT QWCUNO, COUNT(QWCUNO) " _
+            & "FROM SCDBFP10.PMPZQWPF " _
+            & "WHERE QWVAGN IN (" & str1 & "," & str2 & ") " _
+            & "GROUP BY QWCUNO " _
+            & "HAVING COUNT(QWCUNO) > 1) AS T1 " _
+        & "LEFT JOIN (" _
+            & "SELECT QWPCSC, QWPCSP, QWCUNO " _
+            & "FROM SCDBFP10.PMPZQWPF " _
+            & "WHERE QWVAGN IN (" & str1 & "," & str2 & ")) AS T2 " _
+        & "ON T1.QWCUNO = T2.QWCUNO", cnn
+
+    'Return multidimensional of packet data
+    GetVaOvCst = rst
+
+    'Exit Function before error handler
+    Exit Function
+
+'Could not connect to OpCo
+OpErr:
+
+    'If catastrophic error
+    If InStr(Err.Description, "Catastrophic") > 0 Then
+        MsgBox "OBDC overload. " & vblf & vblf _
+            & "Please close all open instances of Excel and try again."
+
+    'If invalid password
+    ElseIf iErr < 2 Then
+
+        'Prompt user to enter SUS credentials
+        UserLog.Show
+
+        'Get updated credentials from server
+        strUid = get_uid
+        strPwd = get_pwd
+
+        'Iterate login attempt counter and resume login
+        iErr = iErr + 1
+        Resume
+
+    'All login attempts unsuccessful
+    Else
+        MsgBox "Could not reach OpCo. Please validate you have access to as240a"
+    End If
+End Function
+
+
+'*******************************************************************************
+'Return all overlapping item given two customer agmts & OpCo
+'*******************************************************************************
+Function GetVaOvItm(str1 As String, str2 As String, strOp As String) _
+    As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim iErr As Integer
+    Dim strUid As String
+    Dim strPwd As String
+
+    'Get username and password
+    strUid = get_uid
+    strPwd = get_pwd
+
+    'Connect to OpCo
+    On Error GoTo OpErr
+    cnn.Open "DSN=AS" & strOp & "A;UID=" & strUid & ";PASSWORD=" & strPwd & ";"
+    On Error GoTo 0
+
+    'Pull overlapping items
+    rst.Open "SELECT TRIM(QBITEM) " _
+        & "FROM SCDBFP10.PMPZQBPF " _
+        & "WHERE QBVAGN IN (" & str1 & "," & str2 & ") " _
+        & "GROUP BY QBITEM " _
+        & "HAVING COUNT(QBITEM) > 1", cnn
+
+    'Return multidimensional of packet data
+    GetVaOvItm = rst
+
+    'Exit Function before error handler
+    Exit Function
+
+'Could not connect to OpCo
+OpErr:
+
+    'If catastrophic error
+    If InStr(Err.Description, "Catastrophic") > 0 Then
+        MsgBox "OBDC overload. " & vblf & vblf _
+            & "Please close all open instances of Excel and try again."
+
+    'If invalid password
+    ElseIf iErr < 2 Then
+
+        'Prompt user to enter SUS credentials
+        UserLog.Show
+
+        'Get updated credentials from server
+        strUid = get_uid
+        strPwd = get_pwd
+
+        'Iterate login attempt counter and resume login
+        iErr = iErr + 1
+        Resume
+
+    'All login attempts unsuccessful
+    Else
+        MsgBox "Could not reach OpCo. Please validate you have access to as240a"
+    End If
+End Function
+
+
+'*******************************************************************************
+'Return all overlapping customers/shp tos give two customer agmts & OpCo
+'*******************************************************************************
+Function GetCaOvCst(str1 As String, str2 As String, strOp As String) _
+    As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim iErr As Integer
+    Dim strUid As String
+    Dim strPwd As String
+
+    'Get username and password
+    strUid = get_uid
+    strPwd = get_pwd
+
+    'Connect to OpCo
+    On Error GoTo OpErr
+    cnn.Open "DSN=AS" & strOp & "A;UID=" & strUid & ";PASSWORD=" & strPwd & ";"
+    On Error GoTo 0
+
+    'CA Query overlapping customer
+    rst.Open "SELECT DISTINCT " _
+        & "TRIM(T2.QYPCSC) || ' ' || TRIM(T2.QYPCSP), TRIM(T2.QYCUNO) " _
+        & "FROM (" _
+            & "SELECT QYCUNO, COUNT(QYCUNO) " _
+            & "FROM SCDBFP10.PMPZQYPF " _
+            & "WHERE QYCANO IN (" & str1 & "," & str2 & ") " _
+            & "GROUP BY QYCUNO " _
+            & "HAVING COUNT(QYCUNO) > 1) AS T1 " _
+        & "LEFT JOIN (" _
+            & "SELECT QYPCSC, QYPCSP, QYCUNO " _
+            & "FROM SCDBFP10.PMPZQYPF " _
+            & "WHERE QYCANO IN (" & str1 & "," & str2 & ")) AS T2 " _
+        & "ON T1.QYCUNO = T2.QYCUNO", cnn
+
+    'Return multidimensional of packet data
+    GetCaOvCst = rst
+
+    'Exit Function before error handler
+    Exit Function
+
+'Could not connect to OpCo
+OpErr:
+
+    'If catastrophic error
+    If InStr(Err.Description, "Catastrophic") > 0 Then
+        MsgBox "OBDC overload. " & vblf & vblf _
+            & "Please close all open instances of Excel and try again."
+
+    'If invalid password
+    ElseIf iErr < 2 Then
+
+        'Prompt user to enter SUS credentials
+        UserLog.Show
+
+        'Get updated credentials from server
+        strUid = get_uid
+        strPwd = get_pwd
+
+        'Iterate login attempt counter and resume login
+        iErr = iErr + 1
+        Resume
+
+    'All login attempts unsuccessful
+    Else
+        MsgBox "Could not reach OpCo. Please validate you have access to as240a"
+    End If
+End Function
+
+
+'*******************************************************************************
+'Return all overlapping item given two customer agmts & OpCo
+'*******************************************************************************
+Function GetCaOvItm(str1 As String, str2 As String, strOp As String) _
+    As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim iErr As Integer
+    Dim strUid As String
+    Dim strPwd As String
+
+    'Get username and password
+    strUid = get_uid
+    strPwd = get_pwd
+
+    'Connect to OpCo
+    On Error GoTo OpErr
+    cnn.Open "DSN=AS" & strOp & "A;UID=" & strUid & ";PASSWORD=" & strPwd & ";"
+    On Error GoTo 0
+
+    'Pull overlapping items
+    rst.Open "SELECT TRIM(QXITEM) " _
+        & "FROM SCDBFP10.PMPZQXPF " _
+        & "WHERE QXCANO IN (" & str1 & "," & str2 & ") " _
+        & "GROUP BY QXITEM " _
+        & "HAVING COUNT(QXITEM) > 1", cnn
+
+    'Return multidimensional of packet data
+    GetCaOvItm = rst
+
+    'Exit Function before error handler
+    Exit Function
+
+'Could not connect to OpCo
+OpErr:
+
+    'If catastrophic error
+    If InStr(Err.Description, "Catastrophic") > 0 Then
+        MsgBox "OBDC overload. " & vblf & vblf _
+            & "Please close all open instances of Excel and try again."
+
+    'If invalid password
+    ElseIf iErr < 2 Then
+
+        'Prompt user to enter SUS credentials
+        UserLog.Show
+
+        'Get updated credentials from server
+        strUid = get_uid
+        strPwd = get_pwd
+
+        'Iterate login attempt counter and resume login
+        iErr = iErr + 1
+        Resume
+
+    'All login attempts unsuccessful
+    Else
+        MsgBox "Could not reach OpCo. Please validate you have access to as240a"
+    End If
+End Function
+
 
 '*******************************************************************************
 'Get associate SUS password
