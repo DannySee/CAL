@@ -1,8 +1,7 @@
 Attribute VB_Name = "btn_Refresh_Data".
 
 'Declare private module constants
-Private Const varSht As Variant = _Array("Programs", "Customer Profile", _
-    "Deviation Loads")
+Private Const varSht As Variant = _Array(oPrgms.Sht, oCst.Sht, oDev.Sht)
 
 
 '*******************************************************************************

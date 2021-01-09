@@ -65,9 +65,9 @@ End Sub
 Sub PopulatePages(strSht As String)
 
     'Format sheets and insert updated server data
-    Utility.ShtRefresh("Programs", Pull.GetPrograms(strCst, "*"))
-    Utility.ShtRefresh("Customer Profile", Pull.GetCstProfile(strCst, "*"))
-    Utility.ShtRefresh("Deviation Loads" Pull.GetDevLds(strCst, "*"))
+    Utility.ShtRefresh(oPrgms.Sht, Pull.GetPrograms(strCst, "*"))
+    Utility.ShtRefresh(oCst.Sht, Pull.GetCstProfile(strCst, "*"))
+    Utility.ShtRefresh(oDev.Sht, Pull.GetDevLds(strCst, "*"))
 
     'Add conditional formatting to programs tab
     Utility.AddCondFormatting
@@ -161,14 +161,14 @@ Sub AddCondFormatting()
     Dim iEnd As Integer
 
     'Get last row of sheet
-    iLRow = LastRow("Programs")
+    iLRow = LastRow(oPrgms.Sht)
 
     'Get column Location
     iStrt = oPrgms.ColIndex("START_DATE") + 1
     iEnd = oPrgms.ColIndex("END_DATE") + 1
 
     'Activate Programs tab
-    With Sheets("Programs")
+    With Sheets(oPrgms.Sht)
 
         'Find last row
         iLRow = .Cells(.Rows.Count, 1).End(xlUp).Row
@@ -312,13 +312,13 @@ End Sub
 'Show all elements of selected Control Panel utility. Variant array includes
 'all shapes to unhide.
 '*******************************************************************************
-Sub ShowSheets(varSht As Variant)
+Sub ShowSheets(varSht As Variant, blShow As Boolean)
 
     'Loop through all shapes in object library
     For Each sht In varSht
 
         'Unhide sheet
-        Sheets(sht).Visible = True
+        Sheets(sht).Visible = blShow
     Next
 End Sub
 
@@ -595,9 +595,9 @@ End Sub
 
 
 '*******************************************************************************
-'Show sheets that contain passthrough keyword.
+'Toggle sheet visibility for
 '*******************************************************************************
-Sub HideSheets(Sht As String)
+Sub SheetVisible(Sht As String, blShow)
 
     'Declare sub variables
     Dim ws As Worksheet
@@ -606,6 +606,6 @@ Sub HideSheets(Sht As String)
     For Each ws In Worksheets
 
         'Hide sheet if it does not contain passthrough keyword
-        If InStr(ws.Name, sht) = 0 Then ws.Visible = False
+        If InStr(ws.Name, sht) = 0 Then ws.Visible = blShow
     Next
 End Sub

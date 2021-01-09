@@ -11,6 +11,7 @@ Attribute VB_Exposed = False
 
 'Declare private class constants
 Private Const strSht As String = "Programs"
+Private Const strShtx As String = "Recover Programs"
 Private Const strDb As String = "UL_Programs"
 Private Const strDbx As String = "Deleted_Programs"
 Private Const iPKey As Integer = 0

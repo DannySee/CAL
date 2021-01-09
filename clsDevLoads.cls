@@ -11,6 +11,7 @@ Attribute VB_Exposed = False
 
 'Declare private class constants
 Private Const strSht As String = "Deviation Loads"
+Private Const strShtx As String = "Recover Deviation Loads"
 Private Const strDb As String = "UL_Deviation_Loads"
 Private Const strDbx As String = "Deleted_Deviation_Loads"
 Private Const iPKey As Integer = 0

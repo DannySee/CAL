@@ -1,8 +1,7 @@
 Attribute VB_Name = "btn_Recover_Deleted_Records"
 
 'Declare private module constants
-Private Const varSht As Variant = _Array("Recover Programs", _
-    "Recover Cust Profile", "Recover Deviation Loads")
+Private Const varSht As Variant = _Array(oPrgms.Shtx, oCst.Shtx, oDev.Shtx)
 
 
 '*******************************************************************************
@@ -20,58 +19,74 @@ Private Sub Recover_Deleted_Initialize()
     Utility.ClearShts(varSht, 3)
 
     'Show utility sheets
-    Utility.ShowSheets(varSht)
+    Utility.ShowSheets(varSht, True)
 
     'Hide all other Sheets (Sheets that do not contain key word Recover)
-    Utility.HideSheets("Recover")
+    Utility.SheetVisible("Recover", False)
 
     'Format sheets and insert updated server data
-    Utility.ShtRefresh("Recover Deleted", Pull.GetDelPrograms(strCst))
-    Utility.ShtRefresh("Recover Cust Profile", Pull.GetDelCst(strCst))
-    Utility.ShtRefresh("recover Deviation Loads", Pull.GetDelDev(strCst))
+    Utility.ShtRefresh(oPrgms.Shtx, Pull.GetDelRecords(strCst, oPrgms.Dbx))
+    Utility.ShtRefresh(oCst.Shtx, Pull.GetDelRecords(strCst, oCst.Dbx))
+    Utility.ShtRefresh(oDev.Shtx, Pull.GetDelRecords(strCst, oDev.Dbx))
 
-    '
+    'Ensure recover programs is active
+    Sheets(oPrgms.Shtx).Activate
 End Sub
 
 
 '*******************************************************************************
-'Send help message to server.
+'Recover deleted program records
 '*******************************************************************************
-Sub Help_Send()
+Sub Recover_Deleted_Prgm_Confirm()
 
-    'Declare variables
-    Dim strFields As String
-    Dim strHelp As string
+    'Declare sub variables
+    Dim iRow As Long
 
-    'Get string from help box
-    strHelp = ActiveSheet.TextBoxes("Help_Body").Text
+    'Ensure only one row is selected
+    If Selection.Rows.Count = 1 Then
 
-    'Ensure there is data to parse
-    If strHelp <> "" Then
+        'Set row number to variable
+        iRow = Selection.Row
 
-        'Send message to database
-        Push.SendHelp(strHelp)
 
-        'Complete message
-        MsgBox "Message sent!"
-
-        'Clear all shapes from Control Panel
-        Utility.ClearShapes
-
-    'No message to Send
+    'If more than one row was selected
     Else
 
-        'Alert user they did not input a message
-        msgbox "No message sent."
+        'Alert user of incorrect process
+        MsgBox "Please select one row at a time"
     End If
 End Sub
 
 
 '*******************************************************************************
-'Hide help window
+'Recover deleted customer profile records
 '*******************************************************************************
-Sub Help_Cancel()
+Sub Recover_Deleted_Cst_Confirm()
 
-    'Clear all shapes from Control Panel
-    Utility.ClearShapes
+
+End Sub
+
+
+'*******************************************************************************
+'Recover deleted program records
+'*******************************************************************************
+Sub Recover_Deleted_Dev_Confirm()
+
+
+End Sub
+
+
+'*******************************************************************************
+'Reset window view (hide utility sheets and show defaults).
+'*******************************************************************************
+Sub Recover_Deleted_Cancel()
+
+    'Show all sheets
+    Utility.SheetVisible("Recover", True)
+
+    'hide utility sheets
+    Utility.ShowSheets(varSht, False)
+
+    'Make control panel the active screen upon completion
+    Sheets("Control Panel").Activates
 End Sub

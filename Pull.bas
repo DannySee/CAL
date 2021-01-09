@@ -32,10 +32,10 @@ End Function
 
 
 '*******************************************************************************
-'Query programs tab. Parameter is the user's network ID. Only pulls assigned
-'customers. Returns open recordset
+'Query deleted records. Only pulls assigned customers or records deleted
+'by user.
 '*******************************************************************************
-Function GetDelPrograms(strCst As String) As ADODB.Recordset
+Function GetDelRecords(strCst As String, strDb As String) As ADODB.Recordset
 
     'Declare function variables
     Dim cnn As New ADODB.Connection
@@ -47,13 +47,13 @@ Function GetDelPrograms(strCst As String) As ADODB.Recordset
 
     'Query deleted records for assigned customers
     rst.Open "SELECT * " _
-        & "FROM UL_Deleted_Programs " _
+        & "FROM " & strDb & " " _
         & "WHERE CUSTOMER IN (" & strCst & ")" _
         & "OR DEL_USER = '" & GetName & "' " _
         & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
 
     'Return query results
-    GetDelPrograms = rst
+    GetDeletedRecords = rst
 End Function
 
 
