@@ -609,3 +609,28 @@ Sub SheetVisible(Sht As String, blShow)
         If InStr(ws.Name, sht) = 0 Then ws.Visible = blShow
     Next
 End Sub
+
+
+'*******************************************************************************
+'Meant only archive recovery purposes. Returns column 1 of selected row
+'(Primary Key). Delete highlighted row and reset cursor point.
+'*******************************************************************************
+Function GetArchiveKey() As Long
+
+    'Ensure only one row is selected
+    If Selection.Rows.Count = 1 Then
+
+        'Return Primary key of recovery line
+        GetArchiveKey = Cells(Selection.Row, 1)
+
+        'Delete selected row and move cursor
+        Rows(Selection.Row).Delete
+        Cells(2, 1).Activate
+
+    'If more than one row was selected
+    Else
+
+        'Alert user of incorrect process
+        MsgBox "Please select one row at a time"
+    End If
+End Function

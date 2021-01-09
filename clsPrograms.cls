@@ -35,7 +35,7 @@ Private Const strCstHeaders As Variant = Array("PROGRAM DESCRIPTION", _
     "BB FORMAT","COST BASIS","CA TYPE","REBATE BASIS","PRE APPROVAL", _
     "APPROP NAME","PRN/GRP","PACKET","PACKET DL","COMMENTS","","","","","")
 Private Const strCstFlds As String = _
-    & "ROGRAM_DESCRIPTION, " _
+    & "PROGRAM_DESCRIPTION, " _
     & "START_DATE, " _
     & "END_DATE, " _
     & "LEAD_VA, " _
@@ -98,6 +98,26 @@ Public Property Get Db() As String
 
     'Return class database table name
     Db = strDb
+End Property
+
+
+'*******************************************************************************
+'Return all fields of UL_Programs table
+'*******************************************************************************
+Public Property Get AllFlds() As String
+
+    'Declare property variables
+    Dim strFlds As String
+
+    'Loop through all key of the dictIndex Dictionary
+    For Each key In dictIndex
+
+        'Assemble String of Fields
+        strFlds = Append(strFlds, ",", key)
+    Next
+
+    'Return string of all fields
+    AllFlds = strFlds
 End Property
 
 

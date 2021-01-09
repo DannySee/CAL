@@ -45,6 +45,25 @@ Public Property Get Db() As String
     Db = strDb
 End Property
 
+'*******************************************************************************
+'Return all fields of Customer Profile table
+'*******************************************************************************
+Public Property Get AllFlds() As String
+
+    'Declare property variables
+    Dim strFlds As String
+
+    'Loop through all key of the dictIndex Dictionary
+    For Each key In dictIndex
+
+        'Assemble String of Fields
+        strFlds = Append(strFlds, ",", key)
+    Next
+
+    'Return string of all fields
+    AllFlds = strFlds
+End Property
+
 
 '*******************************************************************************
 'Property to return dictionary of class database field indeces(Key) and

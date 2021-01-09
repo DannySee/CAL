@@ -40,39 +40,45 @@ End Sub
 Sub Recover_Deleted_Prgm_Confirm()
 
     'Declare sub variables
-    Dim iRow As Long
+    Dim iPKey As Long
 
-    'Ensure only one row is selected
-    If Selection.Rows.Count = 1 Then
+    'Get primary key of selected row
+    iPKey = Utility.GetArchiveKey
 
-        'Set row number to variable
-        iRow = Selection.Row
-
-
-    'If more than one row was selected
-    Else
-
-        'Alert user of incorrect process
-        MsgBox "Please select one row at a time"
-    End If
+    'If a selection was made insert recovery line into main table (UL_Programs)
+    If iPKey <> 0 Then Push.RecoverDeleted(oPrgms, iPKey)
 End Sub
 
 
 '*******************************************************************************
-'Recover deleted customer profile records
+'Recover deleted Customer Profile records
 '*******************************************************************************
 Sub Recover_Deleted_Cst_Confirm()
 
+    'Declare sub variables
+    Dim iPKey As Long
 
+    'Get primary key of selected row
+    iPKey = Utility.GetArchiveKey
+
+    'If a selection was made insert recovery line into main table (UL_Programs)
+    If iPKey <> 0 Then Push.RecoverDeleted(oCst, iPKey)
 End Sub
 
 
 '*******************************************************************************
-'Recover deleted program records
+'Recover deleted Deviation Loads records
 '*******************************************************************************
 Sub Recover_Deleted_Dev_Confirm()
 
+    'Declare sub variables
+    Dim iPKey As Long
 
+    'Get primary key of selected row
+    iPKey = Utility.GetArchiveKey
+
+    'If a selection was made insert recovery line into main table (UL_Programs)
+    If iPKey <> 0 Then Push.RecoverDeleted(oDev, iPKey)
 End Sub
 
 

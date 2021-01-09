@@ -62,6 +62,31 @@ End Sub
 
 
 '*******************************************************************************
+'Executes SQL Insert statement to CAL database. Select records from archive
+'table and return it to main data table
+'*******************************************************************************
+Sub RecoverDeleted(obj As Object, iPKey As Long)
+
+    'Declare sub variables
+    Dim cnn As New ADODB.Connecton
+    Dim rst As New ADODB.Recordset
+    Dim i As Integer
+
+    'Establish connection to SQL server
+    cnn.Open "DRIVER=SQL Server;SERVER=MS440CTIDBPC1;" _
+        & "DATABASE=Pricing_Agreements;"
+
+    'Insert records from recovery table to main table
+    rst.Open "INSERT INTO " & obj.Db & " " _
+        & "SELECT " obj.AllFlds " FROM " & obj.Dbx & " " _
+        & "WHERE PRIMARY_KEY = " & iPKey, cnn
+
+    'Remove recovered records from archive
+    cnn.Execute("DELETE FROM " & obj.Dbx & " WHERE PRIMARY_KEY = " & iPKey)
+End Sub
+
+
+'*******************************************************************************
 'Executes SQL Insert statement to CAL database. Returns recordset of gutter
 'fields if inserted lines i.e. Primary Key, Customer ID etc
 '*******************************************************************************
