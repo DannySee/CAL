@@ -27,7 +27,7 @@ Function GetPrograms(strCst As String, strFlds As String) As ADODB.Recordset
         & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
 
     'Return query results
-    GetPrograms = rst
+    Set GetPrograms = rst
 End Function
 
 
@@ -53,7 +53,7 @@ Function GetDelRecords(strCst As String, strDb As String) As ADODB.Recordset
         & "ORDER BY CUSTOMER, PROGRAM_DESCRIPTION", cnn
 
     'Return query results
-    GetDeletedRecords = rst
+    Set GetDeletedRecords = rst
 End Function
 
 
@@ -84,7 +84,7 @@ Function GetExpPrograms(strCst As String) As ADODB.Recordset
         & "AND END_DATE < " & Now(), cnn
 
     'Return query results
-    GetExpPrograms = rst
+    Set GetExpPrograms = rst
 End Function
 
 
@@ -109,7 +109,7 @@ Function GetCstProfile(strCst As String) As ADODB.Recordset
         & "ORDER BY CUSTOMER", cnn
 
     'Return query results
-    GetCstProfile = rst
+    Set GetCstProfile = rst
 End Function
 
 
@@ -134,7 +134,7 @@ Function GetDevLds(strCst As String) As ADODB.Recordset
         & "ORDER BY CUSTOMER, PROGRAM", cnn
 
     'Return query results
-    GetDevLds = rst
+    Set GetDevLds = rst
 End Function
 
 
@@ -463,7 +463,7 @@ Function GetVaOvCst(str1 As String, str2 As String, strOp As String) _
         & "ON T1.QWCUNO = T2.QWCUNO", cnn
 
     'Return multidimensional of packet data
-    GetVaOvCst = rst
+    Set GetVaOvCst = rst
 
     'Exit Function before error handler
     Exit Function
@@ -527,7 +527,7 @@ Function GetVaOvItm(str1 As String, str2 As String, strOp As String) _
         & "HAVING COUNT(QBITEM) > 1", cnn
 
     'Return multidimensional of packet data
-    GetVaOvItm = rst
+    Set GetVaOvItm = rst
 
     'Exit Function before error handler
     Exit Function
@@ -599,7 +599,7 @@ Function GetCaOvCst(str1 As String, str2 As String, strOp As String) _
         & "ON T1.QYCUNO = T2.QYCUNO", cnn
 
     'Return multidimensional of packet data
-    GetCaOvCst = rst
+    Set GetCaOvCst = rst
 
     'Exit Function before error handler
     Exit Function
@@ -663,7 +663,132 @@ Function GetCaOvItm(str1 As String, str2 As String, strOp As String) _
         & "HAVING COUNT(QXITEM) > 1", cnn
 
     'Return multidimensional of packet data
-    GetCaOvItm = rst
+    Set GetCaOvItm = rst
+
+    'Exit Function before error handler
+    Exit Function
+
+'Could not connect to OpCo
+OpErr:
+
+    'If catastrophic error
+    If InStr(Err.Description, "Catastrophic") > 0 Then
+        MsgBox "OBDC overload. " & vblf & vblf _
+            & "Please close all open instances of Excel and try again."
+
+    'If invalid password
+    ElseIf iErr < 2 Then
+
+        'Prompt user to enter SUS credentials
+        UserLog.Show
+
+        'Get updated credentials from server
+        strUid = get_uid
+        strPwd = get_pwd
+
+        'Iterate login attempt counter and resume login
+        iErr = iErr + 1
+        Resume
+
+    'All login attempts unsuccessful
+    Else
+        MsgBox "Could not reach OpCo. Please validate you have access to as240a"
+    End If
+End Function
+
+
+'*******************************************************************************
+'Return recordset of all items that are coded to strMPC
+'*******************************************************************************
+Function GetSUPCxMPC(strMPC As String) As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim iErr As Integer
+    Dim strUid As String
+    Dim strPwd As String
+
+    'Get username and password
+    strUid = get_uid
+    strPwd = get_pwd
+
+    'Connect to OpCo
+    On Error GoTo OpErr
+    cnn.Open "DSN=AS240A;UID=" & strUid & ";PASSWORD=" & strPwd & ";"
+    On Error GoTo 0
+
+    rst.Open "SELECT DISTINCT TRIM(JFITEM), " _
+        & "TRIM(JFPACK) || '/' || TRIM(JFITSZ), " _
+        & "TRIM(JFBRND), TRIM(JFITDS), TRIM(JFMNPC), JFEUPC " _
+        & "FROM SCDBFP10.USIAJFPF " _
+        & "WHERE TRIM(JFMNPC) IN (" & strMPC & ")", cnn
+
+    'Return multidimensional of packet data
+    Set GetSUPCxMPC = rst
+
+    'Exit Function before error handler
+    Exit Function
+
+'Could not connect to OpCo
+OpErr:
+
+    'If catastrophic error
+    If InStr(Err.Description, "Catastrophic") > 0 Then
+        MsgBox "OBDC overload. " & vblf & vblf _
+            & "Please close all open instances of Excel and try again."
+
+    'If invalid password
+    ElseIf iErr < 2 Then
+
+        'Prompt user to enter SUS credentials
+        UserLog.Show
+
+        'Get updated credentials from server
+        strUid = get_uid
+        strPwd = get_pwd
+
+        'Iterate login attempt counter and resume login
+        iErr = iErr + 1
+        Resume
+
+    'All login attempts unsuccessful
+    Else
+        MsgBox "Could not reach OpCo. Please validate you have access to as240a"
+    End If
+End Function
+
+
+'*******************************************************************************
+'Return recordset of all items that are coded to strMPC
+'*******************************************************************************
+Function GetSUPCxGTIN(strGTIN As String) As ADODB.Recordset
+
+    'Declare function variables
+    Dim cnn As New ADODB.Connection
+    Dim rst As New ADODB.Recordset
+    Dim iErr As Integer
+    Dim strUid As String
+    Dim strPwd As String
+
+    'Get username and password
+    strUid = get_uid
+    strPwd = get_pwd
+
+    'Connect to OpCo
+    On Error GoTo OpErr
+    cnn.Open "DSN=AS240A;UID=" & strUid & ";PASSWORD=" & strPwd & ";"
+    On Error GoTo 0
+
+    'Query for SUPC using GTIN
+    rst.Open "SELECT DISTINCT TRIM(JFITEM), " _
+        & "TRIM(JFPACK) || '/' || TRIM(JFITSZ), " _
+        & "TRIM(JFBRND), TRIM(JFITDS), TRIM(JFMNPC), JFEUPC " _
+        & "FROM SCDBFP10.USIAJFPF " _
+        & "WHERE JFEUPC IN (" & strGTIN & ")", cnn
+
+    'Return multidimensional of packet data
+    Set GetSUPCxGTIN = rst
 
     'Exit Function before error handler
     Exit Function

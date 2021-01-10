@@ -64,8 +64,11 @@ Private Sub Overlap_Validation_Select()
             Range("C2").CopyFromRecordset Pull.GetCaOvItm(strOv1, strOv2, strOp)
         End If
 
-        'Add borders 
+        'Add borders
         Utility.AddBorders
+
+        'Clear all utility elements
+        Utility.ClearShapes
 
     'If missing data
     Else

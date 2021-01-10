@@ -701,3 +701,56 @@ Sub PasteOverlap(upd As ADODB.Recordset)
     Columns(1).RemoveDuplicates Columns:=Array(1)
     Columns(2).RemoveDuplicates Columns:=Array(1)
 End Sub
+
+
+'*******************************************************************************
+'Get user inputted MPC/GTIN for Item Lookup tool
+'*******************************************************************************
+Function GetItmSearch(strCol As String)
+
+    'Declare function variables
+    Dim strItm As String
+
+    'If input is not in list format
+    If Range(strCol & "6").value = "" Then
+
+        'Set string to single MPC entry
+        strItm = Trim(ActiveSheet.TextBoxes("Item_Lookup_MPC").Text)
+
+    'If input is in list format
+    Else
+
+        'Get last row
+        iLRow = Range(strCol & Rows.Count).End(xlUp).Row
+
+        'Loop through list of MPCs
+        For Each r In Range(strCol & ":6:" & strCol & iLRow)
+
+            'Create SQL string of MPCs
+            strItm = Append(strItm, "','", Trim(r.Value))
+        Next
+    End If
+
+    'Return MPC(s)
+    GetItmSearch = "'" & strItm & "'"
+End Function
+
+
+'*******************************************************************************
+'Utilize the xGTIN/xMPC pull queries to get recordset of SUPCs
+'*******************************************************************************
+Function GetSUPC(strGTIN, strMPC) As ADODB.Recordset
+
+    'Declare function variables
+    Dim rstTemp As ADODB.Recordset
+
+    'GTIN should take first priority - if GTINs are provided, search by them 1st
+    If strGTIN <> "" Then Set rstTemp = Pull.GetSUPCxGTIN(strGTIN)
+
+    'If GTIN did not return results or no GTINs were provided, try with MPC
+    If strMPC <> "" And (rstTemp.EOF = True Or strGTIN = "") Then _
+        rstTemp = Pull.GetSUPCxMPC(strMPC)
+
+    'Return query results
+    Set GetSUPC = rstTemp
+End Function
